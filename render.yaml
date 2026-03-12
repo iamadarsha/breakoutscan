@@ -21,12 +21,13 @@ services:
         generateValue: true
     healthCheckPath: /health
 
+  - type: redis
+    name: breakoutscan-redis
+    plan: free
+    maxmemoryPolicy: allkeys-lru
+
 databases:
   - name: breakoutscan-db
     plan: free
     databaseName: stockdb
     user: breakout
-
-  - name: breakoutscan-redis
-    plan: free
-    type: redis
