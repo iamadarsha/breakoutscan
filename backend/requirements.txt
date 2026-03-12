@@ -1,0 +1,53 @@
+# FastAPI core
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+pydantic==2.10.3
+pydantic-settings==2.7.0
+python-multipart==0.0.20
+
+# Database
+sqlalchemy[asyncio]==2.0.36
+asyncpg==0.30.0
+alembic==1.14.0
+
+# Redis
+redis[hiredis]==5.2.1
+
+# HTTP client
+httpx==0.28.1
+
+# Task queue
+celery==5.4.0
+kombu==5.4.2
+
+# Data & Analytics
+pandas==2.2.3
+pandas-ta==0.3.14b0
+numpy==2.2.1
+
+# Upstox WebSocket / Market data
+upstox-python-sdk==2.14.0
+protobuf==5.29.2
+websockets==14.1
+
+# Authentication
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# Supabase
+supabase==2.11.1
+
+# Historical data fallback
+yfinance==0.2.51
+
+# WebSocket broadcast
+python-socketio==5.12.0
+
+# Scheduling
+apscheduler==3.10.4
+
+# Utilities
+python-dotenv==1.0.1
+pytz==2024.2
+aiofiles==24.1.0
+structlog==24.4.0

@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+*.egg
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Node
+node_modules/
+.next/
+out/
+
+# iOS / Xcode
+*.xcarchive
+*.ipa
+DerivedData/
+build/
+*.xcuserdata
+*.xcworkspace/xcuserdata/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+
+# Docker
+docker-compose.override.yml
+
+# Redis
+dump.rdb
+
+# Misc
+.claude/
+stitch-designs/
+generate_icon.py

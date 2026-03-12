@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "BreakoutScan",
+    "slug": "breakoutscan",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#070B14"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.breakoutscan.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#070B14"
+      },
+      "package": "com.breakoutscan.app"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "scheme": "breakoutscan"
+  }
+}
