@@ -21,9 +21,9 @@ celery==5.4.0
 kombu==5.4.2
 
 # Data & Analytics
-pandas==2.2.3
-pandas-ta==0.3.14b0
 numpy==2.2.1
+pandas==2.2.3
+pandas_ta
 
 # Upstox WebSocket / Market data
 upstox-python-sdk==2.14.0
@@ -38,7 +38,7 @@ passlib[bcrypt]==1.7.4
 supabase==2.11.1
 
 # Historical data fallback
-yfinance==0.2.51
+yfinance>=0.2.40
 
 # WebSocket broadcast
 python-socketio==5.12.0
