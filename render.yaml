@@ -25,6 +25,7 @@ services:
     name: breakoutscan-redis
     plan: free
     maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
 
 databases:
   - name: breakoutscan-db
