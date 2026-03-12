@@ -4,6 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 const NAV_ITEMS = [
   { icon: '🏠', label: 'Dashboard', href: '/dashboard' },
   { icon: '🔍', label: 'Screener', href: '/screener' },
+  { icon: '🧠', label: 'AI Picks', href: '/ai-picks' },
   { icon: '📈', label: 'Charts', href: '/chart' },
   { icon: '⭐', label: 'Watchlist', href: '/watchlist' },
   { icon: '🔔', label: 'Alerts', href: '/alerts' },

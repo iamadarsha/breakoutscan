@@ -146,3 +146,33 @@ struct AlertCreateRequest: Codable {
     let notifyTelegram: Bool
     let frequency: String
 }
+
+// MARK: - AI Suggestions
+
+struct AIPick: Codable, Identifiable {
+    var id: String { symbol + action }
+    let symbol: String
+    let companyName: String
+    let action: String
+    let confidence: Int
+    let targetPct: Double
+    let stopLossPct: Double
+    let reasoning: String
+    let tags: [String]
+}
+
+struct AISuggestionsData: Codable {
+    let intraday: [AIPick]?
+    let weekly: [AIPick]?
+    let monthly: [AIPick]?
+}
+
+struct AISuggestionsResponse: Codable {
+    let suggestions: AISuggestionsData?
+    let generatedAt: String?
+    let generationTimeMs: Int?
+    let newsCount: Int?
+    let model: String?
+    let newsHeadlines: [String]?
+    let error: String?
+}

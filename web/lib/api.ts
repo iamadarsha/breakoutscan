@@ -123,6 +123,10 @@ export const api = {
   getAlerts:        () => apiFetch<any[]>('/api/alerts'),
   getAlertHistory:  () => apiFetch<any[]>('/api/alerts/history'),
   createAlert:      (data: any) => apiFetch<any>('/api/alerts', { method: 'POST', body: JSON.stringify(data) }),
+
+  // AI Suggestions
+  getAISuggestions:     () => apiFetch<any>('/api/ai-suggestions'),
+  refreshAISuggestions: () => apiFetch<any>('/api/ai-suggestions/refresh', { method: 'POST' }),
 };
 
 // ── WebSocket helpers ─────────────────────────────────────────────────────────

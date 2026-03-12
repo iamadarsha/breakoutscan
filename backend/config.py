@@ -52,6 +52,9 @@ class Settings(BaseSettings):
     # ── Indian Stock API ─────────────────────────────────────────────────
     indian_api_key: Optional[str] = None  # https://stock.indianapi.in
 
+    # ── Gemini AI ─────────────────────────────────────────────────────────
+    gemini_api_key: Optional[str] = None  # Google Gemini 2.5 Flash
+
     # ── Notifications ──────────────────────────────────────────────────────
     telegram_bot_token: Optional[str] = None
     sendgrid_api_key: Optional[str] = None

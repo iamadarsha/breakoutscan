@@ -112,4 +112,14 @@ actor APIClient {
         let q = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
         return try await get("/api/stocks/search?q=\(q)")
     }
+
+    // MARK: - AI Suggestions
+
+    func getAISuggestions() async throws -> AISuggestionsResponse {
+        try await get("/api/ai-suggestions")
+    }
+
+    func refreshAISuggestions() async throws -> AISuggestionsResponse {
+        try await post("/api/ai-suggestions/refresh")
+    }
 }

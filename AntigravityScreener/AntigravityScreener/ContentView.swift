@@ -8,7 +8,7 @@ struct ContentView: View {
         TabView(selection: $selectedTab) {
             DashboardView(onSelectSymbol: { sym in
                 chartSymbol = sym
-                selectedTab = 2
+                selectedTab = 3
             })
             .tabItem {
                 Image(systemName: "house.fill")
@@ -23,33 +23,40 @@ struct ContentView: View {
                 }
                 .tag(1)
 
+            AIPicksView()
+                .tabItem {
+                    Image(systemName: "brain.head.profile")
+                    Text("AI Picks")
+                }
+                .tag(2)
+
             ChartView()
                 .tabItem {
                     Image(systemName: "chart.xyaxis.line")
                     Text("Charts")
                 }
-                .tag(2)
+                .tag(3)
 
             WatchlistView()
                 .tabItem {
                     Image(systemName: "star.fill")
                     Text("Watchlist")
                 }
-                .tag(3)
+                .tag(4)
 
             AlertsView()
                 .tabItem {
                     Image(systemName: "bell.fill")
                     Text("Alerts")
                 }
-                .tag(4)
+                .tag(5)
 
             FundamentalsView()
                 .tabItem {
                     Image(systemName: "chart.bar.fill")
                     Text("More")
                 }
-                .tag(5)
+                .tag(6)
         }
         .tint(E8.accent)
     }

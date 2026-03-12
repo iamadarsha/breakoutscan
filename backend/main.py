@@ -154,6 +154,32 @@ async def lifespan(app: FastAPI):
         indian_api_task = asyncio.create_task(periodic_live_prices(redis, interval_seconds=60))
         log.info("indian_api_live_feed_enabled")
 
+    # 12. AI Suggestions — generate on startup + schedule refresh every 6 hours
+    ai_task = None
+    if settings.gemini_api_key:
+        from services.ai_suggestions import generate_suggestions
+
+        async def ai_suggestions_loop():
+            await asyncio.sleep(15)  # Let market data load first
+            try:
+                await generate_suggestions(redis)
+                log.info("ai_initial_suggestions_generated")
+            except Exception as e:
+                log.warning("ai_initial_generation_failed", error=str(e))
+            # Re-generate every 6 hours
+            while True:
+                try:
+                    await asyncio.sleep(6 * 60 * 60)
+                    await generate_suggestions(redis, force=True)
+                    log.info("ai_suggestions_refreshed")
+                except asyncio.CancelledError:
+                    break
+                except Exception as e:
+                    log.warning("ai_refresh_failed", error=str(e))
+
+        ai_task = asyncio.create_task(ai_suggestions_loop())
+        log.info("ai_suggestions_scheduler_enabled")
+
     log.info("equifidy_started", mode="live" if settings.upstox_configured else "yfinance")
 
     yield  # ── Server is running ──
@@ -166,6 +192,8 @@ async def lifespan(app: FastAPI):
     data_init_task.cancel()
     if indian_api_task:
         indian_api_task.cancel()
+    if ai_task:
+        ai_task.cancel()
     await streamer.stop()
     if _redis:
         await _redis.aclose()
@@ -200,6 +228,7 @@ from routes.live import router as live_router
 from routes.stocks import router as stocks_router
 from routes.watchlist import router as watchlist_router
 from routes.alerts import router as alerts_router
+from routes.ai_suggestions import router as ai_suggestions_router
 
 app.include_router(auth_router)
 app.include_router(screener_router)
@@ -207,6 +236,7 @@ app.include_router(live_router)
 app.include_router(stocks_router)
 app.include_router(watchlist_router)
 app.include_router(alerts_router)
+app.include_router(ai_suggestions_router)
 
 
 # ── REST Endpoints ─────────────────────────────────────────────────────────

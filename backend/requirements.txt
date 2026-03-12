@@ -46,6 +46,10 @@ python-socketio==5.12.0
 # Scheduling
 apscheduler==3.10.4
 
+# AI / Gemini
+google-generativeai>=0.8.0
+feedparser>=6.0.11
+
 # Utilities
 python-dotenv==1.0.1
 pytz==2024.2
