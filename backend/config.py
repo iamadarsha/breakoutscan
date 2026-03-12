@@ -49,6 +49,9 @@ class Settings(BaseSettings):
     celery_broker_url: str = "redis://localhost:6379/1"
     celery_result_backend: str = "redis://localhost:6379/1"
 
+    # ── Indian Stock API ─────────────────────────────────────────────────
+    indian_api_key: Optional[str] = None  # https://stock.indianapi.in
+
     # ── Notifications ──────────────────────────────────────────────────────
     telegram_bot_token: Optional[str] = None
     sendgrid_api_key: Optional[str] = None

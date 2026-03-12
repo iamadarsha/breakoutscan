@@ -139,6 +139,21 @@ async def lifespan(app: FastAPI):
     # 10. Start periodic data refresh (every 5 minutes)
     refresh_task = asyncio.create_task(periodic_refresh(redis, interval_seconds=300))
 
+    # 11. Start Indian API live price feed (every 60 seconds)
+    indian_api_task = None
+    if settings.indian_api_key:
+        from data.indian_api import fetch_trending_prices, periodic_live_prices
+        async def init_indian_api():
+            await asyncio.sleep(5)  # Let yfinance load first
+            try:
+                await fetch_trending_prices(redis)
+                log.info("indian_api_initial_prices_loaded")
+            except Exception as e:
+                log.warning("indian_api_init_failed", error=str(e))
+        asyncio.create_task(init_indian_api())
+        indian_api_task = asyncio.create_task(periodic_live_prices(redis, interval_seconds=60))
+        log.info("indian_api_live_feed_enabled")
+
     log.info("breakoutscan_started", mode="live" if settings.upstox_configured else "yfinance")
 
     yield  # ── Server is running ──
@@ -149,6 +164,8 @@ async def lifespan(app: FastAPI):
     stream_task.cancel()
     refresh_task.cancel()
     data_init_task.cancel()
+    if indian_api_task:
+        indian_api_task.cancel()
     await streamer.stop()
     if _redis:
         await _redis.aclose()
