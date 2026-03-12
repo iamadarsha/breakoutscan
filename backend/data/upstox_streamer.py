@@ -105,7 +105,7 @@ class MarketDataStreamer:
     async def _subscribe(self, ws, instruments: list[str], mode: str):
         """Send subscription message to Upstox WebSocket."""
         msg = {
-            "guid": "breakoutscan-sub",
+            "guid": "equifidy-sub",
             "method": "sub",
             "data": {
                 "mode": mode,

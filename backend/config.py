@@ -1,5 +1,5 @@
 """
-BreakoutScan Backend Configuration
+Equifidy Backend Configuration
 All settings are read from environment variables (or .env file).
 """
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     )
 
     # ── App ────────────────────────────────────────────────────────────────
-    app_name: str = "BreakoutScan"
+    app_name: str = "Equifidy"
     app_version: str = "1.0.0"
     debug: bool = False
     environment: str = "development"  # development | production

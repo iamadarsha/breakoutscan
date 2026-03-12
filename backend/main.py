@@ -1,5 +1,5 @@
 """
-BreakoutScan Backend — FastAPI Application Entry Point.
+Equifidy Backend — FastAPI Application Entry Point.
 """
 from __future__ import annotations
 import asyncio
@@ -34,7 +34,7 @@ def get_redis_client() -> aioredis.Redis:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup & shutdown logic."""
-    log.info("breakoutscan_starting", environment=settings.environment)
+    log.info("equifidy_starting", environment=settings.environment)
 
     # 1. Init Redis
     redis = get_redis_client()
@@ -154,12 +154,12 @@ async def lifespan(app: FastAPI):
         indian_api_task = asyncio.create_task(periodic_live_prices(redis, interval_seconds=60))
         log.info("indian_api_live_feed_enabled")
 
-    log.info("breakoutscan_started", mode="live" if settings.upstox_configured else "yfinance")
+    log.info("equifidy_started", mode="live" if settings.upstox_configured else "yfinance")
 
     yield  # ── Server is running ──
 
     # Shutdown
-    log.info("breakoutscan_shutting_down")
+    log.info("equifidy_shutting_down")
     tick_task.cancel()
     stream_task.cancel()
     refresh_task.cancel()
@@ -174,7 +174,7 @@ async def lifespan(app: FastAPI):
 # ── Create FastAPI app ─────────────────────────────────────────────────────
 
 app = FastAPI(
-    title="BreakoutScan API",
+    title="Equifidy API",
     description="India's most powerful real-time stock screener API",
     version=settings.app_version,
     lifespan=lifespan,

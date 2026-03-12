@@ -1,5 +1,5 @@
 /**
- * BreakoutScan API client — typed wrappers around the FastAPI backend.
+ * Equifidy API client — typed wrappers around the FastAPI backend.
  */
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8002';

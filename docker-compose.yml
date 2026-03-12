@@ -3,7 +3,7 @@ version: '3.9'
 services:
   postgres:
     image: timescale/timescaledb:latest-pg16
-    container_name: breakoutscan_postgres
+    container_name: equifidy_postgres
     environment:
       POSTGRES_USER: breakout
       POSTGRES_PASSWORD: breakout_dev_pass
@@ -20,7 +20,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: breakoutscan_redis
+    container_name: equifidy_redis
     ports:
       - "6379:6379"
     volumes:
@@ -36,7 +36,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: breakoutscan_backend
+    container_name: equifidy_backend
     env_file:
       - ./backend/.env
     ports:
@@ -54,7 +54,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: breakoutscan_celery
+    container_name: equifidy_celery
     env_file:
       - ./backend/.env
     depends_on:

@@ -34,8 +34,8 @@ export default function LandingPage() {
             background: 'linear-gradient(135deg, #7C5CFC, #5A3ED9)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '18px', fontWeight: '800', color: '#fff',
-          }}>B</div>
-          <span style={{ fontSize: '18px', fontWeight: '800', letterSpacing: '-0.3px' }}>BreakoutScan</span>
+          }}>E</div>
+          <span style={{ fontSize: '18px', fontWeight: '800', letterSpacing: '-0.3px' }}>Equifidy</span>
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
           <button className="btn btn-ghost" onClick={() => router.push('/screener')}>Screener</button>
@@ -123,7 +123,7 @@ export default function LandingPage() {
       {/* Features Grid */}
       <section style={{ maxWidth: '900px', margin: '40px auto 60px', padding: '0 20px' }}>
         <h2 style={{ fontSize: '24px', fontWeight: '800', textAlign: 'center', marginBottom: '32px' }}>
-          Everything you need to find breakout stocks
+          Everything you need to find winning stocks
         </h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
           {FEATURES.map(f => (
@@ -138,7 +138,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer style={{ borderTop: '1px solid var(--border)', padding: '24px 40px', textAlign: 'center', fontSize: '13px', color: 'var(--text-secondary)' }}>
-        BreakoutScan &mdash; Real-time NSE & BSE Stock Screener
+        Equifidy &mdash; Trade with Adarsha!
       </footer>
     </div>
   );

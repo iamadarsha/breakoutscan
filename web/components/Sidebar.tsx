@@ -24,13 +24,13 @@ export default function Sidebar() {
             background: 'linear-gradient(135deg, #7C5CFC, #5A3ED9)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '16px', fontWeight: '800', color: '#000',
-          }}>B</div>
+          }}>E</div>
           <div>
             <div style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>
-              BreakoutScan
+              Equifidy
             </div>
             <div style={{ fontSize: '10px', color: 'var(--accent)', fontWeight: '600', letterSpacing: '0.1em' }}>
-              LIVE NSE + BSE
+              Trade with Adarsha!
             </div>
           </div>
         </div>

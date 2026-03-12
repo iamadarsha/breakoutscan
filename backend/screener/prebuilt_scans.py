@@ -1,5 +1,5 @@
 """
-Pre-built Scan Definitions — all 12 built-in scans for BreakoutScan.
+Pre-built Scan Definitions — all 12 built-in scans for Equifidy.
 Each scan is a dict with conditions, filters, timeframe, and metadata.
 Conditions are designed to work with real market data from 50+ NSE stocks.
 """

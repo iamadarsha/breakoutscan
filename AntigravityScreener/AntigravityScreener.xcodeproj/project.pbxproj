@@ -19,6 +19,7 @@
 		48BA757A4A0628D6ACE3A442 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02CD8927C34048EEC17F5333 /* APIClient.swift */; };
 		6E962FD3206741B1962DCBBA /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EB286FE87B5FBBE791BE38B /* Theme.swift */; };
 		8E836F0D0F5227938C5AE82A /* ScreenerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A91FFB0222F7DF26F909D39 /* ScreenerViewModel.swift */; };
+		941AF2135E33C731C7C0AD7A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EEEEC90B1FF5130B8BA52AC5 /* Assets.xcassets */; };
 		A42F6A96797EFC8262519E10 /* FundamentalsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7C0090A48FE6B411151E9BB /* FundamentalsViewModel.swift */; };
 		ACE1CD52C2E7EF25F4721440 /* WebSocketManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F1978A97C3F0EFFC592EDE3 /* WebSocketManager.swift */; };
 		B4CCC3348C991DFD0D50E4CA /* FundamentalsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F26E70C5B244A4469E939318 /* FundamentalsView.swift */; };
@@ -45,6 +46,7 @@
 		D508CFC12FA266F20EF11B81 /* WatchlistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistView.swift; sourceTree = "<group>"; };
 		E7C0090A48FE6B411151E9BB /* FundamentalsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FundamentalsViewModel.swift; sourceTree = "<group>"; };
 		EC9EF50A9778A3714B3EEC3B /* ScreenerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenerView.swift; sourceTree = "<group>"; };
+		EEEEC90B1FF5130B8BA52AC5 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		EF3F87E9A102E940BC3FB45A /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		EFB39F55F7F8B05B7491C093 /* ChartViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartViewModel.swift; sourceTree = "<group>"; };
 		F26E70C5B244A4469E939318 /* FundamentalsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FundamentalsView.swift; sourceTree = "<group>"; };
@@ -75,6 +77,7 @@
 			isa = PBXGroup;
 			children = (
 				A2004B19F8DB6F450DE86582 /* AntigravityScreenerApp.swift */,
+				EEEEC90B1FF5130B8BA52AC5 /* Assets.xcassets */,
 				F71D0498EA02A18A228996E2 /* ContentView.swift */,
 				145A169B64A37AFC2347CFA3 /* Info.plist */,
 				DA9F761616DFEDBC8B5E7A3C /* Config */,
@@ -203,6 +206,7 @@
 			buildConfigurationList = D70E05FFB9DE6A781AF1BF52 /* Build configuration list for PBXNativeTarget "AntigravityScreener" */;
 			buildPhases = (
 				6763D5A148E74C11FF7B06FE /* Sources */,
+				BDD16895C05CE88D448E25F1 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -248,6 +252,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		BDD16895C05CE88D448E25F1 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				941AF2135E33C731C7C0AD7A /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		6763D5A148E74C11FF7B06FE /* Sources */ = {
@@ -355,6 +370,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = UW23XR9FK2;
 				INFOPLIST_FILE = AntigravityScreener/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Equifidy;
 				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsLocalNetworking = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -376,6 +392,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = UW23XR9FK2;
 				INFOPLIST_FILE = AntigravityScreener/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Equifidy;
 				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsLocalNetworking = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

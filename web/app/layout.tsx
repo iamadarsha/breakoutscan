@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'BreakoutScan — India\'s Most Powerful Stock Screener',
+  title: 'Equifidy — India\'s Most Powerful Stock Screener',
   description: 'Real-time NSE & BSE stock screener with 12 pre-built scans, live charts, alerts and watchlists.',
   keywords: 'stock screener india, NSE screener, BSE screener, technical analysis, breakout stocks',
 };

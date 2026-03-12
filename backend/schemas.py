@@ -1,5 +1,5 @@
 """
-Pydantic v2 request/response schemas for BreakoutScan API.
+Pydantic v2 request/response schemas for Equifidy API.
 """
 from __future__ import annotations
 from datetime import datetime, date

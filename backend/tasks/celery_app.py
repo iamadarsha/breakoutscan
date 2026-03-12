@@ -6,7 +6,7 @@ from celery.schedules import crontab
 from config import settings
 
 app = Celery(
-    "breakoutscan_tasks",
+    "equifidy_tasks",
     broker=settings.celery_broker_url,
     backend=settings.celery_result_backend,
     include=[

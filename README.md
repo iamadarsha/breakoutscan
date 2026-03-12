@@ -1,7 +1,7 @@
-# BreakoutScan — India's Most Powerful Stock Screener
+# Equifidy — India's Most Powerful Stock Screener
 
 ## Project Overview
-BreakoutScan is a production-grade, full-stack Indian stock screener platform providing:
+Equifidy is a production-grade, full-stack Indian stock screener platform providing:
 - **Real-time NSE/BSE data** via Upstox Developer API WebSocket V3
 - **12 pre-built scans** + custom scan builder with 18 operators
 - **Sub-2-second screener** using Redis pipeline batch fetching

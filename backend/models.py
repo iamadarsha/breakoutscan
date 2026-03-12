@@ -1,5 +1,5 @@
 """
-SQLAlchemy ORM models for BreakoutScan.
+SQLAlchemy ORM models for Equifidy.
 Mirrors the database schema defined in the implementation plan.
 """
 import uuid
