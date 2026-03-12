@@ -21,8 +21,8 @@ celery==5.4.0
 kombu==5.4.2
 
 # Data & Analytics
-numpy==2.2.1
-pandas==2.2.3
+numpy>=2.2.6
+pandas>=2.2.3
 pandas_ta
 
 # Upstox WebSocket / Market data
