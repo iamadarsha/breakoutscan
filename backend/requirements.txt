@@ -35,7 +35,7 @@ python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 
 # Supabase
-supabase==2.11.1
+supabase>=2.11.0
 
 # Historical data fallback
 yfinance>=0.2.40
