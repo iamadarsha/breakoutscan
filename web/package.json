@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "next": "15.2.1",
+    "next": "^15.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "lightweight-charts": "^4.2.0",
@@ -23,6 +23,6 @@
     "@types/react-dom": "^19",
     "typescript": "^5",
     "eslint": "^9",
-    "eslint-config-next": "15.2.1"
+    "eslint-config-next": "^15.3.0"
   }
 }
