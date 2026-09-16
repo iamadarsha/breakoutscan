@@ -15,7 +15,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
       <p className="max-w-md text-sm text-text-secondary">{error.message}</p>
       <button
         onClick={reset}
-        className="inline-flex h-10 items-center justify-center rounded-lg bg-gradient-to-br from-[#7C5CFC] to-[#5B3FD4] px-4 text-sm font-semibold shadow-accent"
+        className="inline-flex h-10 items-center justify-center rounded-full bg-gradient-to-br from-[#7C5CFC] to-[#5B3FD4] px-4 text-sm font-semibold shadow-accent"
       >
         Retry
       </button>

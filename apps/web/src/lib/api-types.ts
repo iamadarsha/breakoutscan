@@ -216,17 +216,30 @@ export interface WsUnsubscribeMessage {
 }
 
 /* AI Suggestions */
+export interface NewsSource {
+  title: string;
+  url: string;
+  source: string;
+  published_at?: string;
+}
+
 export interface AiSuggestion {
   symbol: string;
   name?: string;
+  sector?: string;
   rationale: string;
   confidence?: number;
   timeframe?: string;
   target_horizon?: string;
-  entry_range?: string;
-  stop_loss?: string;
-  target?: string;
-  sector?: string;
+  /** Why *now* — the single headline or technical signal that triggered this pick. */
+  catalyst?: string;
+  action?: "BUY" | "SELL";
+  /** Expected % move and suggested stop-loss %, as sent by the backend
+   * (not preformatted strings — format at render time). */
+  target_pct?: number;
+  stop_loss_pct?: number;
+  tags?: string[];
+  news_sources?: NewsSource[];
 }
 
 export interface AiSuggestionsResponse {
@@ -237,7 +250,8 @@ export interface AiSuggestionsResponse {
   swing?: AiSuggestion[];
   positional?: AiSuggestion[];
   generated_at?: string;
-  model?: string;
+  /** Which layer actually produced these picks: "gemini" | "groq" | "technical-analysis" | "pending". */
+  source?: string;
   headline_count?: number;
 }
 

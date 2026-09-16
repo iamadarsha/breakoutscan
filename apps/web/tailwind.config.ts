@@ -26,11 +26,12 @@ const config: Config = {
       },
       boxShadow: {
         card: "0 4px 24px rgba(0, 0, 0, 0.5)",
+        glass: "inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 4px 16px rgba(0, 0, 0, 0.25)",
         accent: "0 4px 20px rgba(124, 92, 252, 0.25)",
         glow: "0 0 20px rgba(124, 92, 252, 0.15)",
       },
       borderRadius: {
-        panel: "12px",
+        panel: "20px",
       },
       fontFamily: {
         sans: ["var(--font-inter)"],

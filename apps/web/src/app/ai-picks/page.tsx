@@ -12,6 +12,7 @@ import {
   useRefreshAiSuggestions,
 } from "@/hooks/use-ai-suggestions";
 import { RefreshCw, Sparkles, Clock } from "lucide-react";
+import { ThinkingOrb } from "thinking-orbs";
 import { cn } from "@/lib/cn";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
@@ -91,6 +92,16 @@ export default function AiPicksPage() {
       })
     : null;
 
+  // Reflects which layer actually produced these picks — never claim AI
+  // authorship for a result the technical-scoring fallback generated.
+  const sourceLabel: Record<string, string> = {
+    gemini: "Gemini 3.5 Flash Lite",
+    groq: "Groq Llama 3.3",
+    "technical-analysis": "Technical scoring (AI unavailable)",
+    pending: "Generating…",
+  };
+  const poweredBy = data?.source ? sourceLabel[data.source] ?? data.source : null;
+
   return (
     <AppShell>
       <PageTransition>
@@ -110,16 +121,15 @@ export default function AiPicksPage() {
               }
               disabled={refresh.isPending}
               className={cn(
-                "flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-text-secondary transition hover:border-accent/30 hover:text-text-primary",
+                "flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-text-secondary transition hover:border-accent/30 hover:text-text-primary",
                 refresh.isPending && "cursor-not-allowed opacity-50"
               )}
             >
-              <RefreshCw
-                className={cn(
-                  "h-4 w-4",
-                  refresh.isPending && "animate-spin"
-                )}
-              />
+              {refresh.isPending ? (
+                <ThinkingOrb state="searching" size={20} theme="auto" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
               {refresh.isPending ? "Generating..." : "Refresh"}
             </button>
           </div>
@@ -127,9 +137,11 @@ export default function AiPicksPage() {
           {/* Meta info */}
           {generatedAt && (
             <div className="flex flex-wrap items-center gap-4 text-xs text-text-muted">
-              <span className="flex items-center gap-1">
-                <Sparkles className="h-3 w-3" /> Powered by Gemini 3.1 Flash
-              </span>
+              {poweredBy && (
+                <span className="flex items-center gap-1">
+                  <Sparkles className="h-3 w-3" /> Powered by {poweredBy}
+                </span>
+              )}
               <span className="flex items-center gap-1">
                 <Clock className="h-3 w-3" /> Generated {generatedAt}
               </span>

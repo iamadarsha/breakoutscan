@@ -38,7 +38,7 @@ export default function AlertsPage() {
               </p>
               <button
                 onClick={() => router.push("/login")}
-                className="mt-6 inline-flex items-center gap-2 rounded-xl border border-accent/30 bg-accent/10 px-6 py-3 text-sm font-semibold text-accent transition hover:bg-accent/20"
+                className="mt-6 inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-6 py-3 text-sm font-semibold text-accent transition hover:bg-accent/20"
               >
                 <LogIn className="h-4 w-4" />
                 Sign In with Google

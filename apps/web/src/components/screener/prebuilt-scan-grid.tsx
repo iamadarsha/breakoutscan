@@ -114,10 +114,10 @@ export function PrebuiltScanGrid({
               onClick={() => onRunScan(scan.id)}
               disabled={isLoading}
               className={cn(
-                "group relative flex flex-col items-start rounded-xl border p-3 sm:p-4 text-left transition-all",
+                "group relative flex flex-col items-start rounded-panel border backdrop-blur-md p-3 sm:p-4 text-left shadow-glass transition-all",
                 isActive
                   ? "border-accent bg-accent/[0.08] shadow-glow"
-                  : "border-border bg-card hover:border-accent/50 hover:-translate-y-0.5 hover:shadow-lg"
+                  : "border-border bg-card hover:border-accent/50 hover:-translate-y-0.5"
               )}
             >
               <div

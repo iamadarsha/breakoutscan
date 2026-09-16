@@ -99,9 +99,11 @@ export function Sidebar() {
           collapsed ? "justify-center" : "gap-3"
         )}
       >
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-accent/70 text-base font-bold text-white shadow-accent">
-          B
-        </div>
+        <img
+          src="/logo-mark.svg"
+          alt="BreakoutScan"
+          className="h-10 w-10 shrink-0 rounded-xl shadow-accent"
+        />
         {!collapsed && (
           <div>
             <div className="text-sm font-semibold text-text-primary">BreakoutScan</div>

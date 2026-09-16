@@ -100,20 +100,22 @@ export default function HomePage() {
           transition={{ duration: 0.6 }}
           className="relative z-10 flex flex-col items-center text-center"
         >
-          <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#7c5cfc] to-[#5b3fd4] text-xl font-bold text-white shadow-accent">
-            B
-          </div>
+          <img
+            src="/logo-mark.svg"
+            alt="BreakoutScan"
+            className="mb-6 h-14 w-14 rounded-2xl shadow-accent"
+          />
           <h1 className="mb-4 text-5xl font-bold tracking-tight text-text-primary sm:text-6xl lg:text-7xl">
             <span className="gradient-text">BreakoutScan</span>
           </h1>
           <p className="mb-8 max-w-xl text-lg text-text-secondary sm:text-xl">
-            India&#39;s Real-Time Stock Breakout Scanner.
+            India&#39;s Real-Time Stock Breakout Scanner.{" "}
             <br className="hidden sm:block" />
             Spot momentum before the crowd.
           </p>
           <Link
             href="/dashboard"
-            className="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#7c5cfc] to-[#5b3fd4] px-8 py-3.5 text-sm font-semibold text-white shadow-accent transition hover:shadow-lg hover:brightness-110"
+            className="group inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#7c5cfc] to-[#5b3fd4] px-8 py-3.5 text-sm font-semibold text-white shadow-accent transition hover:shadow-lg hover:brightness-110"
           >
             Open Dashboard
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />

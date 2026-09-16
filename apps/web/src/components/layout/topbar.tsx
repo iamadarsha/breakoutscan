@@ -213,10 +213,12 @@ export function Topbar() {
           ))}
         </div>
 
-        {/* Mobile: App name */}
-        <span className="sm:hidden text-sm font-bold text-text-primary tracking-tight whitespace-nowrap">
-          Codex Screener
-        </span>
+        {/* Mobile: App logo — icon only, the search bar needs the room */}
+        <img
+          src="/logo-mark.svg"
+          alt="BreakoutScan"
+          className="sm:hidden h-7 w-7 shrink-0 rounded-md"
+        />
 
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Search with autocomplete */}
@@ -268,7 +270,7 @@ export function Topbar() {
           {/* Theme toggle */}
           <button
             onClick={toggleTheme}
-            className="rounded-xl p-2 sm:p-2.5 text-text-secondary transition hover:bg-elevated hover:text-text-primary min-h-[36px] min-w-[36px] flex items-center justify-center"
+            className="rounded-full p-2 sm:p-2.5 text-text-secondary transition hover:bg-elevated hover:text-text-primary min-h-[36px] min-w-[36px] flex items-center justify-center"
             title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
           >
             {theme === "dark" ? (

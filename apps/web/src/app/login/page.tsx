@@ -40,9 +40,11 @@ export default function LoginPage() {
 
         {/* Logo */}
         <div className="text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent/70 text-2xl font-bold text-white shadow-accent">
-            B
-          </div>
+          <img
+            src="/logo-mark.svg"
+            alt="BreakoutScan"
+            className="mx-auto h-16 w-16 rounded-2xl shadow-accent"
+          />
           <h1 className="mt-4 text-xl font-semibold text-text-primary">
             BreakoutScan
           </h1>
@@ -55,7 +57,7 @@ export default function LoginPage() {
         <button
           onClick={handleGoogleSignIn}
           disabled={loading}
-          className="flex w-full items-center justify-center gap-3 rounded-xl border border-border bg-card px-4 py-3 text-sm font-medium text-text-primary transition hover:bg-elevated disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-3 rounded-full border border-border bg-card px-4 py-3 text-sm font-medium text-text-primary transition hover:bg-elevated disabled:opacity-50"
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24">
             <path

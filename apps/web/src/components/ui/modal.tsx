@@ -58,7 +58,7 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
                 <h3 className="text-lg font-semibold text-text-primary">{title}</h3>
                 <button
                   onClick={onClose}
-                  className="rounded-xl p-2.5 text-text-secondary transition hover:bg-elevated hover:text-text-primary"
+                  className="rounded-full p-2.5 text-text-secondary transition hover:bg-elevated hover:text-text-primary"
                   aria-label="Close"
                 >
                   <X className="h-5 w-5" />

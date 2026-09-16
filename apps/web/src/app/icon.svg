@@ -1,0 +1,56 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1024" y2="1024" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0b0a14"/>
+      <stop offset="0.55" stop-color="#1a1333"/>
+      <stop offset="1" stop-color="#2c1f57"/>
+    </linearGradient>
+    <linearGradient id="sheen" x1="120" y1="80" x2="700" y2="520" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.14"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="barMuted" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-color="#b3a4ff"/>
+      <stop offset="1" stop-color="#8d7cf0"/>
+    </linearGradient>
+    <linearGradient id="barBreakout" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-color="#3dffc4"/>
+      <stop offset="1" stop-color="#00c796"/>
+    </linearGradient>
+    <filter id="softGlow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="34" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <clipPath id="roundedClip">
+      <rect x="0" y="0" width="1024" height="1024" rx="224"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#roundedClip)">
+    <rect x="0" y="0" width="1024" height="1024" fill="url(#bg)"/>
+
+    <!-- breakout glow -->
+    <circle cx="712" cy="440" r="130" fill="#00c796" opacity="0.35" filter="url(#softGlow)"/>
+
+    <!-- resistance line -->
+    <line x1="210" y1="560" x2="814" y2="560" stroke="#cfc4ff" stroke-opacity="0.32" stroke-width="6" stroke-dasharray="14 16" stroke-linecap="round"/>
+
+    <!-- consolidation bars -->
+    <rect x="282" y="680" width="60" height="100" rx="14" fill="url(#barMuted)" opacity="0.55"/>
+    <rect x="382" y="630" width="60" height="150" rx="14" fill="url(#barMuted)" opacity="0.7"/>
+    <rect x="482" y="650" width="60" height="130" rx="14" fill="url(#barMuted)" opacity="0.6"/>
+    <rect x="582" y="590" width="60" height="190" rx="14" fill="url(#barMuted)" opacity="0.85"/>
+
+    <!-- breakout bar -->
+    <rect x="682" y="420" width="60" height="360" rx="16" fill="url(#barBreakout)"/>
+
+    <!-- breakout arrow -->
+    <path d="M712 300 L768 384 L730 384 L730 420 L694 420 L694 384 L656 384 Z" fill="url(#barBreakout)"/>
+
+    <!-- glass sheen -->
+    <rect x="0" y="0" width="1024" height="1024" fill="url(#sheen)"/>
+  </g>
+</svg>

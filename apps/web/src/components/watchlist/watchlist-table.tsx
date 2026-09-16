@@ -100,7 +100,7 @@ export function WatchlistTable({ items, onRemove }: WatchlistTableProps) {
               e.stopPropagation();
               onRemove(row.original.symbol);
             }}
-            className="rounded-lg p-1.5 text-text-muted transition hover:bg-elevated hover:text-bearish"
+            className="rounded-full p-1.5 text-text-muted transition hover:bg-elevated hover:text-bearish"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>

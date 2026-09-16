@@ -65,7 +65,7 @@ export function FilterSidebar({
         </Button>
         <button
           onClick={onReset}
-          className="rounded-lg border border-border p-2.5 text-text-secondary transition hover:bg-elevated hover:text-text-primary"
+          className="rounded-full border border-border p-2.5 text-text-secondary transition hover:bg-elevated hover:text-text-primary"
         >
           <RotateCcw className="h-4 w-4" />
         </button>

@@ -12,7 +12,7 @@ interface TimeframeTabsProps {
 
 export function TimeframeTabs({ active, onChange }: TimeframeTabsProps) {
   return (
-    <div className="flex items-center gap-1 rounded-lg border border-border bg-page p-1">
+    <div className="flex items-center gap-1 rounded-full border border-border bg-page p-1">
       {TIMEFRAME_OPTIONS.map((opt) => {
         const isDisabled = INTRADAY_VALUES.has(opt.value);
         return (
@@ -22,7 +22,7 @@ export function TimeframeTabs({ active, onChange }: TimeframeTabsProps) {
             disabled={isDisabled}
             title={isDisabled ? "Intraday charts coming soon" : undefined}
             className={cn(
-              "rounded-md px-3 py-1.5 text-xs font-semibold transition",
+              "rounded-full px-3 py-1.5 text-xs font-semibold transition",
               isDisabled
                 ? "cursor-not-allowed text-text-muted opacity-40"
                 : active === opt.value

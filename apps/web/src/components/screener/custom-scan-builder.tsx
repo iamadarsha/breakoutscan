@@ -123,7 +123,7 @@ export function CustomScanBuilder({ onRun, isLoading }: CustomScanBuilderProps) 
       <div className="flex items-center gap-3">
         <button
           onClick={addCondition}
-          className="flex items-center gap-1.5 rounded-lg border border-dashed border-border px-3 py-2 text-xs text-text-secondary transition hover:border-accent hover:text-text-primary"
+          className="flex items-center gap-1.5 rounded-full border border-dashed border-border px-3 py-2 text-xs text-text-secondary transition hover:border-accent hover:text-text-primary"
         >
           <Plus className="h-3.5 w-3.5" />
           Add Condition

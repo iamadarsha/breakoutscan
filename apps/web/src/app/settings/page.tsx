@@ -14,7 +14,7 @@ import { useState, useEffect } from "react";
 const DATA_SOURCES = [
   { name: "Yahoo Finance", desc: "OHLCV data & technical indicators", status: "active" },
   { name: "Indian Stock API", desc: "Live NSE market data & indices", status: "active" },
-  { name: "Gemini 2.5 Flash", desc: "AI-powered stock suggestions", status: "active" },
+  { name: "Gemini 3.5 Flash Lite", desc: "AI-powered stock suggestions", status: "active" },
   { name: "Google News RSS", desc: "Market news aggregation", status: "active" },
 ];
 
@@ -62,7 +62,7 @@ export default function SettingsPage() {
               <button
                 onClick={toggleTheme}
                 className={cn(
-                  "flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium transition",
+                  "flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium transition",
                   "hover:border-accent/30 hover:text-text-primary"
                 )}
               >
@@ -145,14 +145,14 @@ export default function SettingsPage() {
               {userEmail ? (
                 <button
                   onClick={handleSignOut}
-                  className="flex items-center gap-2 rounded-lg border border-red-500/30 px-4 py-2 text-sm font-medium text-red-400 transition hover:bg-red-500/10"
+                  className="flex items-center gap-2 rounded-full border border-red-500/30 px-4 py-2 text-sm font-medium text-red-400 transition hover:bg-red-500/10"
                 >
                   <LogOut className="h-4 w-4" /> Sign Out
                 </button>
               ) : (
                 <button
                   onClick={() => router.push("/login")}
-                  className="flex items-center gap-2 rounded-lg border border-accent/30 bg-accent/10 px-4 py-2 text-sm font-medium text-accent transition hover:bg-accent/20"
+                  className="flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-4 py-2 text-sm font-medium text-accent transition hover:bg-accent/20"
                 >
                   Sign In
                 </button>

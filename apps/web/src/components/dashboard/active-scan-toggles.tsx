@@ -37,7 +37,7 @@ export function ActiveScanToggles({ scans, onRunScan }: ActiveScanTogglesProps) 
               key={scan.id}
               onClick={() => toggleScan(scan.id)}
               className={cn(
-                "flex items-center gap-2 rounded-lg border px-3 py-2.5 text-left text-sm transition",
+                "flex items-center gap-2 rounded-full border px-3 py-2.5 text-left text-sm transition",
                 isActive
                   ? "border-accent bg-accent/10 text-text-primary"
                   : "border-border bg-page text-text-secondary hover:border-border hover:text-text-primary"

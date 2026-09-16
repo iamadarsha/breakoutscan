@@ -35,7 +35,7 @@ export function ScanResultsPanel({ result, onClose }: ScanResultsPanelProps) {
         </div>
         <button
           onClick={onClose}
-          className="rounded-lg p-1.5 text-text-secondary transition hover:bg-elevated hover:text-text-primary"
+          className="rounded-full p-1.5 text-text-secondary transition hover:bg-elevated hover:text-text-primary"
         >
           <X className="h-4 w-4" />
         </button>

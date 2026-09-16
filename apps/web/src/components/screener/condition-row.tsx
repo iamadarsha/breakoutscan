@@ -92,7 +92,7 @@ export function ConditionRow({
         onClick={onRemove}
         disabled={!canRemove}
         className={cn(
-          "rounded-lg p-2 transition",
+          "rounded-full p-2 transition",
           canRemove
             ? "text-text-secondary hover:bg-elevated hover:text-bearish"
             : "cursor-not-allowed text-border"

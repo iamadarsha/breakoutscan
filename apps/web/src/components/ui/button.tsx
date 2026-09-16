@@ -43,7 +43,7 @@ export function Button({
     <button
       onClick={handleClick}
       className={cn(
-        "inline-flex items-center justify-center rounded-xl font-semibold transition-all duration-200 press-scale disabled:opacity-50 disabled:pointer-events-none",
+        "inline-flex items-center justify-center rounded-full font-semibold transition-all duration-200 press-scale disabled:opacity-50 disabled:pointer-events-none",
         sizeStyles[size],
         variantStyles[variant],
         className
