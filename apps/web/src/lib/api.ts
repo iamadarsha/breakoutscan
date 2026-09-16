@@ -16,6 +16,7 @@ import type {
   ScanResult,
   SectorData,
   Stock,
+  StockAnalysis,
   StockListResponse,
   WatchlistItem,
 } from "./api-types";
@@ -189,6 +190,10 @@ export function fetchPriceHistory(
 
 export function fetchIndicators(symbol: string): Promise<Indicators> {
   return publicFetch<Indicators>(`/api/prices/indicators/${symbol}`);
+}
+
+export function fetchStockAnalysis(symbol: string): Promise<StockAnalysis> {
+  return publicFetch<StockAnalysis>(`/api/stocks/${symbol}/analysis`);
 }
 
 /* ------------------------------------------------------------------ */

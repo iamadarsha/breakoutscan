@@ -11,6 +11,7 @@ import { TimeframeTabs } from "@/components/chart/timeframe-tabs";
 import { IndicatorPills } from "@/components/chart/indicator-pills";
 import { StockSnapshot } from "@/components/chart/stock-snapshot";
 import { CompanyInfoPanel } from "@/components/chart/company-info-panel";
+import { StockAnalysisCard } from "@/components/chart/stock-analysis-card";
 import { useLivePrices } from "@/hooks/use-live-prices";
 import { fetchStock, fetchIndicators, fetchStocks, fetchLivePrice } from "@/lib/api";
 import { searchLocalStocks } from "@/lib/nse-stocks";
@@ -194,6 +195,9 @@ export default function ChartPage() {
 
           {/* Main Chart */}
           <PriceChart symbol={symbol} interval={timeframe} height={chartHeight} />
+
+          {/* AI BUY/SELL/HOLD Call */}
+          <StockAnalysisCard key={symbol} symbol={symbol} />
 
           {/* Company Info */}
           <CompanyInfoPanel symbol={symbol} />

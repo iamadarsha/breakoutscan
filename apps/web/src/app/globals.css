@@ -178,6 +178,13 @@ select {
   50% { box-shadow: 0 0 25px rgba(124, 92, 252, 0.5); }
 }
 
+/* Indeterminate loading bar — duration unknown (waiting on an AI call),
+   so a sliding segment reads as "in progress" without faking a percentage. */
+@keyframes indeterminate-progress {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}
+
 @keyframes slide-in {
   0% { opacity: 0; transform: translateX(-12px); }
   100% { opacity: 1; transform: translateX(0); }

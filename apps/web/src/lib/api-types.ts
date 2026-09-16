@@ -255,6 +255,26 @@ export interface AiSuggestionsResponse {
   headline_count?: number;
 }
 
+/** Per-symbol BUY/SELL/HOLD call shown below the chart — unlike AiSuggestion
+ * (a curated pick list), this always resolves to one of the three actions
+ * for whichever stock the user is actively viewing. */
+export interface StockAnalysis {
+  symbol: string;
+  name?: string;
+  sector?: string;
+  action: "BUY" | "SELL" | "HOLD";
+  confidence: number;
+  rationale: string;
+  catalyst?: string;
+  target_pct?: number;
+  stop_loss_pct?: number;
+  tags?: string[];
+  news_sources?: NewsSource[];
+  /** Which layer produced this call: "groq" | "technical-analysis". */
+  source?: string;
+  generated_at?: string;
+}
+
 /* Company Info */
 export interface CompanyInfo {
   symbol: string;

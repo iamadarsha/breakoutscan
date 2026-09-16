@@ -15,6 +15,7 @@ from app.api.routes import (
     market,
     prices,
     screener,
+    stock_analysis,
     stocks,
     watchlist,
 )
@@ -35,4 +36,5 @@ api_router.include_router(fundamentals.router)
 api_router.include_router(indices.router)
 api_router.include_router(ai_suggestions.router)
 api_router.include_router(company_info.router)
+api_router.include_router(stock_analysis.router)
 api_router.include_router(breakouts.router)
