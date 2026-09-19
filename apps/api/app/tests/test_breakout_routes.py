@@ -47,6 +47,14 @@ class _FakeDbSession:
 
 
 @pytest.fixture(autouse=True)
+def _market_open_by_default(monkeypatch):
+    async def _open() -> bool:
+        return True
+
+    monkeypatch.setattr("app.api.routes.breakouts._market_is_open", _open)
+
+
+@pytest.fixture(autouse=True)
 def _clear_overrides():
     yield
     app.dependency_overrides.pop(get_db, None)
@@ -207,3 +215,21 @@ async def test_get_symbol_breakouts_uppercases_symbol(monkeypatch):
 
     assert resp.status_code == 200
     assert resp.json()["symbol"] == "RELIANCE"
+
+
+async def test_tracker_rows_are_not_live_while_the_market_is_closed(monkeypatch):
+    """A closed-market restart re-scans stale data once; those trackers are
+    last-session signals, not live ones, and must be labelled that way."""
+
+    async def _closed() -> bool:
+        return False
+
+    monkeypatch.setattr("app.api.routes.breakouts._market_is_open", _closed)
+    monkeypatch.setattr("app.api.routes.breakouts.get_breakout_state_store", _seeded_store)
+
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/api/breakouts/active")
+
+    assert resp.status_code == 200
+    assert resp.json()[0]["is_live"] is False

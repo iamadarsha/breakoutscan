@@ -20,7 +20,17 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/breakouts", tags=["breakouts"])
 
 
-def _to_active_out(tracker: BreakoutTracker) -> ActiveBreakoutOut:
+async def _market_is_open() -> bool:
+    """Holiday-aware; defaults to open so a status failure never hides live signals."""
+    try:
+        from app.api.routes.market import _market_status_now
+
+        return bool((await _market_status_now()).is_open)
+    except Exception:
+        return True
+
+
+def _to_active_out(tracker: BreakoutTracker, is_live: bool = True) -> ActiveBreakoutOut:
     return ActiveBreakoutOut(
         symbol=tracker.symbol,
         company_name=company_name_for(tracker.symbol),
@@ -36,7 +46,7 @@ def _to_active_out(tracker: BreakoutTracker) -> ActiveBreakoutOut:
         triggered_at=tracker.triggered_at,
         bars_confirmed=tracker.bars_confirmed,
         score=None,
-        is_live=True,
+        is_live=is_live,
     )
 
 
@@ -99,7 +109,8 @@ async def list_active_breakouts(
     trackers = trackers[:limit]
 
     if trackers:
-        return [_to_active_out(t) for t in trackers]
+        live = await _market_is_open()
+        return [_to_active_out(t, is_live=live) for t in trackers]
 
     return await _last_session_breakouts(db, trigger_type, limit)
 
@@ -124,6 +135,6 @@ async def get_symbol_breakouts(symbol: str, db: AsyncSession = Depends(get_db)):
 
     return SymbolBreakoutsOut(
         symbol=sym,
-        active=[_to_active_out(t) for t in active],
+        active=[_to_active_out(t, is_live=await _market_is_open()) for t in active],
         recent_events=[BreakoutEventOut.model_validate(r) for r in rows],
     )
