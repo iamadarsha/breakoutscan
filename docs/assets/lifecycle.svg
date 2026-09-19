@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="400" viewBox="0 0 1280 400" role="img">
+<style>
+text{font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif} .m{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace}
+@keyframes tokA{0%{opacity:0}3%{opacity:1}45%{opacity:1}50%,100%{opacity:0}} @keyframes tokB{0%,52%{opacity:0}55%{opacity:1}95%{opacity:1}100%{opacity:0}}
+</style>
+<rect width="1280" height="400" rx="20" fill="#ffffff" stroke="#e1e5ec"/>
+<text x="40" y="44" font-size="22" font-weight="700" fill="#0e1320">A breakout is a process, not a single tick</text>
+<text x="40" y="68" font-size="14" fill="#656d80">Each trigger (opening-range break, 52-week high, VWAP reclaim…) walks the same states. Only confirmed breakouts are stored and alertable.</text>
+<rect x="60" y="150" width="150" height="46" rx="23" fill="#f2f4f7" stroke="#e1e5ec" stroke-width="1.5"/><text x="135.0" y="179" font-size="15" font-weight="700" fill="#4a5266" text-anchor="middle" letter-spacing="0.6">ARMED</text>
+<rect x="400" y="150" width="170" height="46" rx="23" fill="#f4f1ff" stroke="#b8a8ff" stroke-width="1.5"/><text x="485.0" y="179" font-size="15" font-weight="700" fill="#5a3fe0" text-anchor="middle" letter-spacing="0.6">TRIGGERED</text>
+<rect x="770" y="150" width="180" height="46" rx="23" fill="#e6f4ee" stroke="#8fd0b4" stroke-width="1.5"/><text x="860.0" y="179" font-size="15" font-weight="700" fill="#067a50" text-anchor="middle" letter-spacing="0.6">CONFIRMED</text>
+<rect x="1050" y="150" width="160" height="46" rx="23" fill="#fdeaee" stroke="#f0a4b4" stroke-width="1.5"/><text x="1130.0" y="179" font-size="15" font-weight="700" fill="#c41f42" text-anchor="middle" letter-spacing="0.6">FAILED</text>
+<rect x="330" y="268" width="190" height="46" rx="23" fill="#fdeaee" stroke="#f0a4b4" stroke-width="1.5"/><text x="425.0" y="297" font-size="15" font-weight="700" fill="#c41f42" text-anchor="middle" letter-spacing="0.6">INVALIDATED</text>
+<rect x="560" y="268" width="150" height="46" rx="23" fill="#f2f4f7" stroke="#e1e5ec" stroke-width="1.5"/><text x="635.0" y="297" font-size="15" font-weight="700" fill="#4a5266" text-anchor="middle" letter-spacing="0.6">EXPIRED</text>
+<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#656d80"/></marker></defs>
+<path d="M212 173 L396 173" fill="none" stroke="#656d80" stroke-width="2" marker-end="url(#ah)"/><text x="304" y="158" font-size="12.5" fill="#656d80" text-anchor="middle">price crosses the level</text>
+<path d="M572 173 L766 173" fill="none" stroke="#656d80" stroke-width="2" marker-end="url(#ah)"/><text x="669" y="158" font-size="12.5" fill="#656d80" text-anchor="middle">holds for the window</text>
+<path d="M952 173 L1046 173" fill="none" stroke="#c41f42" stroke-width="2" marker-end="url(#ah)"/><text x="999" y="158" font-size="12.5" fill="#c41f42" text-anchor="middle">reverses</text>
+<path d="M470 198 L440 264" fill="none" stroke="#656d80" stroke-width="2" marker-end="url(#ah)"/><text x="380" y="236" font-size="12.5" fill="#656d80" text-anchor="middle"></text>
+<path d="M520 198 L620 264" fill="none" stroke="#656d80" stroke-width="2" marker-end="url(#ah)"/><text x="710" y="236" font-size="12.5" fill="#656d80" text-anchor="middle"></text>
+<text x="425" y="338" font-size="12.5" fill="#c41f42" text-anchor="middle">reverses before confirming</text>
+<text x="635" y="338" font-size="12.5" fill="#656d80" text-anchor="middle">window runs out / session ends</text>
+<text x="860" y="222" font-size="12.5" fill="#067a50" font-weight="600" text-anchor="middle">stored, scored, alertable</text>
+<text x="1130" y="222" font-size="12.5" fill="#c41f42" text-anchor="middle">a false breakout, recorded as one</text>
+<text x="60" y="376" font-size="13" fill="#656d80">Confirmation is 1–2 bars on a 5- or 15-minute timeframe depending on the trigger. Levels are re-armed after a failure.</text>
+<g style="animation:tokA 12s infinite"><circle r="9" fill="#067a50"><animateMotion dur="12s" repeatCount="indefinite" keyPoints="0;0;.33;.33;.66;.66;.66;0;0" keyTimes="0;.03;.15;.2;.32;.4;.5;.5;1" calcMode="linear" path="M135 173 L485 173 L860 173"/></circle></g>
+<g style="animation:tokB 12s infinite"><circle r="9" fill="#c41f42"><animateMotion dur="12s" repeatCount="indefinite" keyPoints="0;0;.4;.4;1;1" keyTimes="0;.55;.7;.75;.9;1" calcMode="linear" path="M135 173 L485 173 L425 291"/></circle></g>
+</svg>

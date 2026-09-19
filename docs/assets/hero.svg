@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="400" viewBox="0 0 1280 400" role="img">
+<style>
+text{font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif} .m{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace}
+@keyframes res{0%,34%{stroke-dashoffset:560;opacity:0}36%{opacity:1}48%,90%{stroke-dashoffset:0;opacity:1}96%,100%{stroke-dashoffset:0;opacity:0}}
+@keyframes k0{0%,3.0%{opacity:0;transform:scaleY(0.2)}5.0%{opacity:1;transform:scaleY(1)}90%{opacity:1}96%,100%{opacity:0}}
+@keyframes k1{0%,5.8%{opacity:0;transform:scaleY(0.2)}7.8%{opacity:1;transform:scaleY(1)}90%{opacity:1}96%,100%{opacity:0}}
+@keyframes k2{0%,8.5%{opacity:0;transform:scaleY(0.2)}10.5%{opacity:1;transform:scaleY(1)}90%{opacity:1}96%,100%{opacity:0}}
+@keyframes k3{0%,11.2%{opacity:0;transform:scaleY(0.2)}13.2%{opacity:1;transform:scaleY(1)}90%{opacity:1}96%,100%{opacity:0}}
+@keyframes k4{0%,14.0%{opacity:0;transform:scaleY(0.2)}16.0%{opacity:1;transform:scaleY(1)}90%{opacity:1}96%,100%{opacity:0}}
+@keyframes k5{0%,16.8%{opacity:0;transform:scaleY(0.2)}18.8%{opacity:1;transform:scaleY(1)}90%{opacity:1}96%,100%{opacity:0}}
+@keyframes k6{0%,19.5%{opacity:0;transform:scaleY(0.2)}21.5%{opacity:1;transform:scaleY(1)}90%{opacity:1}96%,100%{opacity:0}}
+@keyframes k7{0%,22.2%{opacity:0;transform:scaleY(0.2)}24.2%{opacity:1;transform:scaleY(1)}90%{opacity:1}96%,100%{opacity:0}}
+@keyframes k8{0%,25.0%{opacity:0;transform:scaleY(0.2)}27.0%{opacity:1;transform:scaleY(1)}90%{opacity:1}96%,100%{opacity:0}}
+@keyframes k9{0%,27.8%{opacity:0;transform:scaleY(0.2)}29.8%{opacity:1;transform:scaleY(1)}90%{opacity:1}96%,100%{opacity:0}}
+@keyframes k10{0%,30.5%{opacity:0;transform:scaleY(0.2)}32.5%{opacity:1;transform:scaleY(1)}90%{opacity:1}96%,100%{opacity:0}}
+@keyframes k11{0%,33.2%{opacity:0;transform:scaleY(0.2)}35.2%{opacity:1;transform:scaleY(1)}90%{opacity:1}96%,100%{opacity:0}}
+@keyframes k12{0%,36.0%{opacity:0;transform:scaleY(0.2)}38.0%{opacity:1;transform:scaleY(1)}90%{opacity:1}96%,100%{opacity:0}}
+@keyframes k13{0%,38.8%{opacity:0;transform:scaleY(0.2)}40.8%{opacity:1;transform:scaleY(1)}90%{opacity:1}96%,100%{opacity:0}}
+@keyframes k14{0%,41.5%{opacity:0;transform:scaleY(0.2)}43.5%{opacity:1;transform:scaleY(1)}90%{opacity:1}96%,100%{opacity:0}}
+@keyframes k15{0%,44.2%{opacity:0;transform:scaleY(0.2)}46.2%{opacity:1;transform:scaleY(1)}90%{opacity:1}96%,100%{opacity:0}}
+@keyframes k16{0%,47.0%{opacity:0;transform:scaleY(0.2)}49.0%{opacity:1;transform:scaleY(1)}90%{opacity:1}96%,100%{opacity:0}}
+@keyframes ring{0%,52%{opacity:0;r:6}54%{opacity:.9;r:8}70%{opacity:0;r:34}100%{opacity:0;r:34}}
+@keyframes tag{0%,60%{opacity:0;transform:translateY(8px)}66%,90%{opacity:1;transform:translateY(0)}96%,100%{opacity:0}}
+</style>
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0b1020"/><stop offset="1" stop-color="#151d3a"/></linearGradient><radialGradient id="glow" cx="0.8" cy="0.35" r="0.6"><stop offset="0" stop-color="#5a3fe0" stop-opacity="0.35"/><stop offset="1" stop-color="#5a3fe0" stop-opacity="0"/></radialGradient></defs>
+<rect width="1280" height="400" rx="22" fill="url(#bg)"/><rect width="1280" height="400" rx="22" fill="url(#glow)"/>
+<line x1="680" y1="80" x2="1236" y2="80" stroke="#ffffff" stroke-opacity="0.06"/>
+<line x1="680" y1="132" x2="1236" y2="132" stroke="#ffffff" stroke-opacity="0.06"/>
+<line x1="680" y1="184" x2="1236" y2="184" stroke="#ffffff" stroke-opacity="0.06"/>
+<line x1="680" y1="236" x2="1236" y2="236" stroke="#ffffff" stroke-opacity="0.06"/>
+<line x1="680" y1="288" x2="1236" y2="288" stroke="#ffffff" stroke-opacity="0.06"/>
+<text x="64" y="150" font-size="66" font-weight="700" fill="#ffffff" letter-spacing="-1.5">BreakoutScan</text>
+<text x="66" y="196" font-size="24" fill="#aab3c8">A screener and breakout monitor for NSE stocks.</text>
+<text x="66" y="228" font-size="18" fill="#7f8aa3">Scan the NIFTY 500, watch breakouts confirm,</text><text x="66" y="252" font-size="18" fill="#7f8aa3">and read the day's news-driven ideas.</text>
+<rect x="66" y="282" width="120" height="34" rx="9" fill="#ffffff" fill-opacity="0.08" stroke="#ffffff" stroke-opacity="0.14"/><text x="126.0" y="304" font-size="15" fill="#e6eaf5" text-anchor="middle" font-weight="600">NIFTY 500</text>
+<rect x="198" y="282" width="100" height="34" rx="9" fill="#ffffff" fill-opacity="0.08" stroke="#ffffff" stroke-opacity="0.14"/><text x="248.0" y="304" font-size="15" fill="#e6eaf5" text-anchor="middle" font-weight="600">13 scans</text>
+<rect x="310" y="282" width="190" height="34" rx="9" fill="#ffffff" fill-opacity="0.08" stroke="#ffffff" stroke-opacity="0.14"/><text x="405.0" y="304" font-size="15" fill="#e6eaf5" text-anchor="middle" font-weight="600">12 breakout triggers</text>
+<rect x="512" y="282" width="150" height="34" rx="9" fill="#ffffff" fill-opacity="0.08" stroke="#ffffff" stroke-opacity="0.14"/><text x="587.0" y="304" font-size="15" fill="#e6eaf5" text-anchor="middle" font-weight="600">AI reading list</text>
+<text x="66" y="358" class="m" font-size="14" fill="#7f8aa3">breakoutscan-web.vercel.app</text>
+<text x="1236" y="372" font-size="12" fill="#5b6785" text-anchor="end">illustrative price action</text>
+<line x1="700" y1="182" x2="1240" y2="182" stroke="#f5a524" stroke-width="1.6" stroke-dasharray="6 6" style="stroke-dasharray:560;animation:res 11.0s infinite"/>
+<text x="706" y="172" font-size="12" fill="#f5a524" font-weight="600">resistance</text>
+<g style="transform-box:fill-box;transform-origin:50% 100%;animation:k0 11.0s infinite"><line x1="706" y1="223" x2="706" y2="261" stroke="#19c48a" stroke-width="2"/><rect x="699.0" y="232" width="14" height="18" rx="2" fill="#19c48a"/></g>
+<g style="transform-box:fill-box;transform-origin:50% 100%;animation:k1 11.0s infinite"><line x1="736" y1="220" x2="736" y2="254" stroke="#ff5f7e" stroke-width="2"/><rect x="729.0" y="232" width="14" height="8" rx="2" fill="#ff5f7e"/></g>
+<g style="transform-box:fill-box;transform-origin:50% 100%;animation:k2 11.0s infinite"><line x1="766" y1="207" x2="766" y2="248" stroke="#19c48a" stroke-width="2"/><rect x="759.0" y="222" width="14" height="18" rx="2" fill="#19c48a"/></g>
+<g style="transform-box:fill-box;transform-origin:50% 100%;animation:k3 11.0s infinite"><line x1="796" y1="213" x2="796" y2="247" stroke="#ff5f7e" stroke-width="2"/><rect x="789.0" y="222" width="14" height="14" rx="2" fill="#ff5f7e"/></g>
+<g style="transform-box:fill-box;transform-origin:50% 100%;animation:k4 11.0s infinite"><line x1="826" y1="202" x2="826" y2="250" stroke="#19c48a" stroke-width="2"/><rect x="819.0" y="214" width="14" height="22" rx="2" fill="#19c48a"/></g>
+<g style="transform-box:fill-box;transform-origin:50% 100%;animation:k5 11.0s infinite"><line x1="856" y1="199" x2="856" y2="236" stroke="#ff5f7e" stroke-width="2"/><rect x="849.0" y="214" width="14" height="14" rx="2" fill="#ff5f7e"/></g>
+<g style="transform-box:fill-box;transform-origin:50% 100%;animation:k6 11.0s infinite"><line x1="886" y1="201" x2="886" y2="239" stroke="#19c48a" stroke-width="2"/><rect x="879.0" y="210" width="14" height="18" rx="2" fill="#19c48a"/></g>
+<g style="transform-box:fill-box;transform-origin:50% 100%;animation:k7 11.0s infinite"><line x1="916" y1="198" x2="916" y2="240" stroke="#ff5f7e" stroke-width="2"/><rect x="909.0" y="210" width="14" height="16" rx="2" fill="#ff5f7e"/></g>
+<g style="transform-box:fill-box;transform-origin:50% 100%;animation:k8 11.0s infinite"><line x1="946" y1="191" x2="946" y2="234" stroke="#19c48a" stroke-width="2"/><rect x="939.0" y="206" width="14" height="20" rx="2" fill="#19c48a"/></g>
+<g style="transform-box:fill-box;transform-origin:50% 100%;animation:k9 11.0s infinite"><line x1="976" y1="197" x2="976" y2="233" stroke="#ff5f7e" stroke-width="2"/><rect x="969.0" y="206" width="14" height="16" rx="2" fill="#ff5f7e"/></g>
+<g style="transform-box:fill-box;transform-origin:50% 100%;animation:k10 11.0s infinite"><line x1="1006" y1="192" x2="1006" y2="236" stroke="#19c48a" stroke-width="2"/><rect x="999.0" y="204" width="14" height="18" rx="2" fill="#19c48a"/></g>
+<g style="transform-box:fill-box;transform-origin:50% 100%;animation:k11 11.0s infinite"><line x1="1036" y1="189" x2="1036" y2="226" stroke="#ff5f7e" stroke-width="2"/><rect x="1029.0" y="204" width="14" height="14" rx="2" fill="#ff5f7e"/></g>
+<g style="transform-box:fill-box;transform-origin:50% 100%;animation:k12 11.0s infinite"><line x1="1066" y1="191" x2="1066" y2="229" stroke="#19c48a" stroke-width="2"/><rect x="1059.0" y="200" width="14" height="18" rx="2" fill="#19c48a"/></g>
+<g style="transform-box:fill-box;transform-origin:50% 100%;animation:k13 11.0s infinite"><line x1="1096" y1="188" x2="1096" y2="228" stroke="#ff5f7e" stroke-width="2"/><rect x="1089.0" y="200" width="14" height="14" rx="2" fill="#ff5f7e"/></g>
+<g style="transform-box:fill-box;transform-origin:50% 100%;animation:k14 11.0s infinite"><line x1="1126" y1="168" x2="1126" y2="212" stroke="#19c48a" stroke-width="2"/><rect x="1119.0" y="176" width="14" height="30" rx="2" fill="#19c48a"/></g>
+<g style="transform-box:fill-box;transform-origin:50% 100%;animation:k15 11.0s infinite"><line x1="1156" y1="142" x2="1156" y2="182" stroke="#19c48a" stroke-width="2"/><rect x="1149.0" y="150" width="14" height="26" rx="2" fill="#19c48a"/></g>
+<g style="transform-box:fill-box;transform-origin:50% 100%;animation:k16 11.0s infinite"><line x1="1186" y1="116" x2="1186" y2="156" stroke="#19c48a" stroke-width="2"/><rect x="1179.0" y="126" width="14" height="24" rx="2" fill="#19c48a"/></g>
+<circle cx="1126" cy="176" r="8" fill="none" stroke="#19c48a" stroke-width="2" style="animation:ring 11.0s infinite"/>
+<g style="animation:tag 11.0s infinite"><rect x="1042" y="52" width="168" height="30" rx="8" fill="#19c48a" fill-opacity="0.16" stroke="#19c48a" stroke-opacity="0.5"/><text x="1126" y="72" font-size="14" font-weight="700" fill="#19c48a" text-anchor="middle">▲ Breakout confirmed</text><line x1="1126" y1="84" x2="1126" y2="150" stroke="#19c48a" stroke-opacity="0.4" stroke-dasharray="3 4"/></g>
+</svg>

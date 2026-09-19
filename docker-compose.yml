@@ -43,6 +43,7 @@ services:
     environment:
       API_HOST: 0.0.0.0
       API_PORT: 8000
+      PORT: 8000 # the image's CMD listens on $PORT; keep in line with the healthcheck and port mappings
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-breakoutscan}:${POSTGRES_PASSWORD:-breakoutscan}@postgres:5432/${POSTGRES_DB:-breakoutscan}
       REDIS_URL: redis://redis:6379/0
       UPSTOX_API_KEY: ${UPSTOX_API_KEY:-}
