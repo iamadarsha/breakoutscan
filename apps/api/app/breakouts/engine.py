@@ -212,7 +212,16 @@ async def _scan_symbol(symbol: str) -> None:
             float(current_volume / level.level) if trigger_type is TriggerType.VOLUME_BREAKOUT and level.level else None
         )
         signal = tracker.evaluate(event, level.level, compare_value, now, bar_ts, volume_ratio, level.context)
+        tracker.display_price = current_price
         if signal is not None:
+            if value_kind == "volume":
+                # A volume trigger compares volume, but persisted/alerted prices
+                # must be real prices, not a traded-volume count.
+                signal = replace(
+                    signal,
+                    trigger_price=current_price,
+                    confirmation_price=current_price if signal.confirmation_price is not None else None,
+                )
             signals.append(signal)
 
     # ---- zero-cross triggers (EMA9/EMA21, MACD/signal) ----

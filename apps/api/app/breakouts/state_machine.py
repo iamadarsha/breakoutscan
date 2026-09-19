@@ -72,6 +72,9 @@ class BreakoutTracker:
     last_bar_ts: str | None = None
     bars_confirmed: int = 0
     last_price: Decimal | None = None
+    # Real traded price for display. last_price doubles as the previous
+    # compared value, which is a volume count for volume triggers.
+    display_price: Decimal | None = None
     last_updated: datetime | None = None
     confirmed_at: datetime | None = None
     confirmation_price: Decimal | None = None

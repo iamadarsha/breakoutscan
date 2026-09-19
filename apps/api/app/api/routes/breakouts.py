@@ -26,7 +26,11 @@ def _to_active_out(tracker: BreakoutTracker) -> ActiveBreakoutOut:
         direction=tracker.direction.value,
         status=tracker.status.value,
         reference_level=float(tracker.level) if tracker.level is not None else 0.0,
-        last_price=float(tracker.last_price) if tracker.last_price is not None else None,
+        last_price=(
+            float(tracker.display_price)
+            if tracker.display_price is not None
+            else float(tracker.last_price) if tracker.last_price is not None else None
+        ),
         triggered_at=tracker.triggered_at,
         bars_confirmed=tracker.bars_confirmed,
         score=None,

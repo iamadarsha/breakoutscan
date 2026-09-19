@@ -255,3 +255,45 @@ async def test_breakout_engine_loop_processes_in_chunks_and_records_coverage(mon
     assert coverage["expected"] == 7
     assert coverage["processed"] == 6  # all but the one that raised
     assert coverage["failed"] == 1
+
+
+@pytest.mark.usefixtures("fake_redis")
+async def test_volume_breakout_reports_real_price_not_traded_volume(monkeypatch):
+    """Regression: a volume trigger compares volume against a volume level, but
+    the price shown to users and stored/alerted with the signal must be the
+    real traded price (the dashboard once showed a 'price' of 1,698,993)."""
+    from app.api.routes.breakouts import _to_active_out
+    from app.services.redis_cache import hset_dict
+
+    symbol = "WELCORP"
+    await hset_dict(indicator_key(symbol, "1d"), {"sma_20_volume": "100000"})
+
+    recorded = []
+
+    async def _record(signal, **kwargs):
+        recorded.append(signal)
+
+    async def _no_alerts(symbol_arg, **kwargs):
+        return []
+
+    monkeypatch.setattr(engine, "record_breakout_event", _record)
+    monkeypatch.setattr(engine, "_active_alerts_for_symbol", _no_alerts)
+
+    cycle = datetime(2026, 9, 15, 10, 0, tzinfo=IST)
+    for step, volume in enumerate([50_000, 1_700_000, 1_800_000]):  # below, spike, still above
+        await set_json(f"price:{symbol}", {"ltp": 2463.0, "volume": volume})
+        monkeypatch.setattr(engine, "now_ist", lambda c=cycle + timedelta(minutes=5 * step): c)
+        await engine._scan_symbol(symbol)  # noqa: SLF001
+
+    tracker = engine.get_breakout_state_store().get_or_create(
+        symbol, TriggerType.VOLUME_BREAKOUT, Direction.BULLISH,
+        engine.DEFAULT_CONFIGS[TriggerType.VOLUME_BREAKOUT],
+    )
+    assert tracker.status in (BreakoutStatus.TRIGGERED, BreakoutStatus.CONFIRMED)
+    assert _to_active_out(tracker).last_price == 2463.0
+
+    volume_signals = [s for s in recorded if s.trigger_type is TriggerType.VOLUME_BREAKOUT]
+    for signal in volume_signals:
+        assert float(signal.trigger_price) == 2463.0
+        if signal.confirmation_price is not None:
+            assert float(signal.confirmation_price) == 2463.0
