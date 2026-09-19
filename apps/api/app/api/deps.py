@@ -9,6 +9,7 @@ from fastapi import Header, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
+from app.core.supabase_auth import AuthNotConfigured, verify_supabase_token
 from app.db.session import get_db_session
 
 logger = logging.getLogger(__name__)
@@ -33,26 +34,21 @@ async def get_current_user(
 
     token = authorization[7:]
 
-    if not settings.supabase_jwt_secret:
-        logger.warning("SUPABASE_JWT_SECRET not configured — rejecting request")
-        raise HTTPException(status_code=500, detail="Auth not configured")
-
     try:
-        payload = jwt.decode(
-            token,
-            settings.supabase_jwt_secret,
-            algorithms=["HS256"],
-            audience="authenticated",
-        )
-        user_id = payload.get("sub")
-        if not user_id:
-            raise HTTPException(status_code=401, detail="Invalid token: missing sub claim")
-        return user_id
+        payload = await verify_supabase_token(token, settings)
+    except AuthNotConfigured as exc:
+        logger.warning("Auth not configured — rejecting request: %s", exc)
+        raise HTTPException(status_code=500, detail="Auth not configured")
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
     except jwt.InvalidTokenError as e:
         logger.warning("JWT validation failed: %s", e)
         raise HTTPException(status_code=401, detail="Invalid token")
+
+    user_id = payload.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid token: missing sub claim")
+    return user_id
 
 
 async def get_optional_user(
