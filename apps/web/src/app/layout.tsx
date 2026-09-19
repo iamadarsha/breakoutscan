@@ -2,9 +2,8 @@
 
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "sonner";
 import { getQueryClient } from "@/lib/query-client";
-import { ThemeProvider } from "@/components/providers/theme-provider";
+import { ThemeProvider, ThemedToaster } from "@/components/providers/theme-provider";
 import type { ReactNode } from "react";
 
 import "./globals.css";
@@ -30,7 +29,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
     <html
       lang="en"
       className={`${inter.variable} ${jetbrainsMono.variable}`}
-      data-theme="dark"
+      data-theme="light"
       suppressHydrationWarning
     >
       <head>
@@ -42,25 +41,15 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="theme-color" content="#0a0e1a" id="theme-color-meta" />
+        <meta name="theme-color" content="#f0f2f8" id="theme-color-meta" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
       <body>
         <QueryClientProvider client={queryClient}>
           <ThemeProvider>
-          {children}
+            {children}
+            <ThemedToaster />
           </ThemeProvider>
-          <Toaster
-            theme="dark"
-            position="bottom-right"
-            toastOptions={{
-              style: {
-                background: "#1A1B23",
-                border: "1px solid #2A2B35",
-                color: "#E8E9F0",
-              },
-            }}
-          />
         </QueryClientProvider>
       </body>
     </html>
