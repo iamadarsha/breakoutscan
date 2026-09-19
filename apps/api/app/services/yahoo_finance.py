@@ -105,10 +105,18 @@ class YFinanceProvider:
         """Fetch 1-year history, compute indicators, and store in Redis.
 
         Returns ``True`` on success, ``False`` on failure.
+
+        The download AND the pandas-ta indicator math both run via
+        ``asyncio.to_thread()`` — not just the download. pandas-ta's ~10
+        indicator calls per symbol are genuine synchronous CPU work; left on
+        the event loop directly, 500 symbols' worth (run in this process's
+        single asyncio event loop alongside the Upstox WebSocket) measured a
+        17.5s event-loop stall during a live bulk-compute pass (2026-09-15),
+        which is long enough to miss Upstox's keepalive pings and trigger a
+        reconnect. Only the two Redis writes stay on the event loop, since
+        those are genuine async I/O.
         """
         try:
-            import pandas_ta as ta  # noqa: F811 – local import to isolate dep
-
             ticker = _nse_ticker(symbol)
             df = await asyncio.to_thread(
                 yf.download,
@@ -123,198 +131,22 @@ class YFinanceProvider:
                 log.warning("yfinance_no_data_for_indicators", symbol=symbol)
                 return False
 
-            # Flatten MultiIndex columns if present
-            if isinstance(df.columns, pd.MultiIndex):
-                df.columns = df.columns.get_level_values(0)
-
-            # Ensure columns are simple strings
-            df.columns = [str(c) for c in df.columns]
-
-            # Drop duplicate columns: yfinance can produce two 'Close' columns after
-            # MultiIndex flattening for certain single-ticker downloads. When that
-            # happens df["Close"] returns a 2-D DataFrame, and pandas-ta crashes with
-            # "arg must be a list, tuple, 1-d array, or Series".
-            df = df.loc[:, ~df.columns.duplicated(keep="first")]
-
-            # Coerce OHLCV columns to numeric — yfinance can return mixed types
-            # for newly-listed or recently-split stocks (e.g. object dtype columns).
-            for _col in ["Open", "High", "Low", "Close", "Volume"]:
-                if _col in df.columns:
-                    df[_col] = pd.to_numeric(df[_col], errors="coerce")
-            df = df.dropna(subset=["Close", "High", "Low", "Open"])
-            df["Volume"] = df["Volume"].fillna(0)
-
-            if df.empty:
-                log.warning("yfinance_no_numeric_data", symbol=symbol)
+            computed = await asyncio.to_thread(
+                YFinanceProvider._compute_indicator_mapping, df, symbol
+            )
+            if computed is None:
                 return False
-
-            # --- Compute indicators ----------------------------------------
-            close = df["Close"]
-            high = df["High"]
-            low = df["Low"]
-            volume = df["Volume"]
-
-            # Helper: get current and previous value from a series
-            def _cur_prev(series):
-                if series is None or len(series) < 2:
-                    cur = series.iloc[-1] if series is not None and len(series) else None
-                    return cur, None
-                return series.iloc[-1], series.iloc[-2]
-
-            # RSI
-            rsi_series = ta.rsi(close, length=14)
-            rsi, prev_rsi = _cur_prev(rsi_series)
-
-            # EMAs
-            ema9_series = ta.ema(close, length=9)
-            ema9, prev_ema9 = _cur_prev(ema9_series)
-
-            ema21_series = ta.ema(close, length=21)
-            ema21, prev_ema21 = _cur_prev(ema21_series)
-
-            # SMAs
-            sma20_series = ta.sma(close, length=20)
-            sma20, prev_sma20 = _cur_prev(sma20_series)
-
-            sma50_series = ta.sma(close, length=50)
-            sma50, prev_sma50 = _cur_prev(sma50_series)
-
-            sma200_series = ta.sma(close, length=200)
-            sma200, prev_sma200 = _cur_prev(sma200_series)
-
-            # MACD
-            macd_df = ta.macd(close, fast=12, slow=26, signal=9)
-            macd_val = None
-            macd_signal = None
-            prev_macd_val = None
-            prev_macd_signal = None
-            if macd_df is not None and not macd_df.empty:
-                macd_cols = macd_df.columns.tolist()
-                for col in macd_cols:
-                    if col.startswith("MACD_"):
-                        macd_val = macd_df[col].iloc[-1]
-                        prev_macd_val = macd_df[col].iloc[-2] if len(macd_df[col]) >= 2 else None
-                    elif col.startswith("MACDs_"):
-                        macd_signal = macd_df[col].iloc[-1]
-                        prev_macd_signal = macd_df[col].iloc[-2] if len(macd_df[col]) >= 2 else None
-
-            # Bollinger Bands
-            bb_df = ta.bbands(close, length=20, std=2)
-            bb_upper = None
-            bb_lower = None
-            bb_mid = None
-            if bb_df is not None and not bb_df.empty:
-                bb_cols = bb_df.columns.tolist()
-                for col in bb_cols:
-                    if col.startswith("BBU_"):
-                        bb_upper = bb_df[col].iloc[-1]
-                    elif col.startswith("BBL_"):
-                        bb_lower = bb_df[col].iloc[-1]
-                    elif col.startswith("BBM_"):
-                        bb_mid = bb_df[col].iloc[-1]
-
-            # ATR
-            atr_series = ta.atr(high, low, close, length=14)
-            atr = atr_series.iloc[-1] if atr_series is not None and len(atr_series) else None
-
-            # ADX
-            adx_df = ta.adx(high, low, close, length=14)
-            adx_val = None
-            if adx_df is not None and not adx_df.empty:
-                adx_cols = adx_df.columns.tolist()
-                for col in adx_cols:
-                    if col.startswith("ADX_"):
-                        adx_val = adx_df[col].iloc[-1]
-
-            # VWAP (only meaningful for intraday but we compute a rolling proxy)
-            vwap_series = ta.vwap(high, low, close, volume)
-            vwap = vwap_series.iloc[-1] if vwap_series is not None and len(vwap_series) else None
-
-            # Volume SMA(20) — volume already coerced to numeric above
-            vol_sma20_series = ta.sma(volume, length=20)
-            vol_sma20 = (
-                vol_sma20_series.iloc[-1]
-                if vol_sma20_series is not None and len(vol_sma20_series)
-                else None
-            )
-
-            # --- Latest and previous OHLCV -----------------------------------
-            latest = df.iloc[-1]
-            prev = df.iloc[-2] if len(df) >= 2 else latest
-
-            latest_close = float(latest["Close"])
-            prev_close_val = float(prev["Close"])
-            change_pct = (
-                round(((latest_close - prev_close_val) / prev_close_val) * 100, 2)
-                if prev_close_val
-                else 0.0
-            )
-
-            # 52-week high / low
-            high_52w = float(high.tail(252).max()) if len(high) >= 252 else float(high.max())
-            low_52w = float(low.tail(252).min()) if len(low) >= 252 else float(low.min())
-
-            # --- Build mapping and store in Redis -----------------------------
-            mapping = {
-                "open": _safe_str(latest.get("Open")),
-                "high": _safe_str(latest.get("High")),
-                "low": _safe_str(latest.get("Low")),
-                "close": _safe_str(latest.get("Close")),
-                "volume": _safe_str(latest.get("Volume")),
-                "prev_open": _safe_str(prev.get("Open")),
-                "prev_high": _safe_str(prev.get("High")),
-                "prev_low": _safe_str(prev.get("Low")),
-                "prev_close": _safe_str(prev.get("Close")),
-                "prev_volume": _safe_str(prev.get("Volume")),
-                "rsi_14": _safe_str(rsi),
-                "prev_rsi_14": _safe_str(prev_rsi),
-                "ema_9": _safe_str(ema9),
-                "prev_ema_9": _safe_str(prev_ema9),
-                "ema_21": _safe_str(ema21),
-                "prev_ema_21": _safe_str(prev_ema21),
-                "sma_20": _safe_str(sma20),
-                "prev_sma_20": _safe_str(prev_sma20),
-                "sma_50": _safe_str(sma50),
-                "prev_sma_50": _safe_str(prev_sma50),
-                "sma_200": _safe_str(sma200),
-                "prev_sma_200": _safe_str(prev_sma200),
-                "macd": _safe_str(macd_val),
-                "prev_macd": _safe_str(prev_macd_val),
-                "macd_signal": _safe_str(macd_signal),
-                "prev_macd_signal": _safe_str(prev_macd_signal),
-                "atr_14": _safe_str(atr),
-                "adx_14": _safe_str(adx_val),
-                "vwap": _safe_str(vwap),
-                "bollinger_upper": _safe_str(bb_upper),
-                "bollinger_lower": _safe_str(bb_lower),
-                "bollinger_mid": _safe_str(bb_mid),
-                "sma_20_volume": _safe_str(vol_sma20),
-                "change_pct": _safe_str(change_pct),
-                "high_52w": _safe_str(high_52w),
-                "low_52w": _safe_str(low_52w),
-            }
+            mapping, ohlcv_records = computed
 
             await hset_dict(indicator_key(symbol, "1d"), mapping, ttl=14400)
 
-            # Store OHLCV bars in Redis for chart rendering (avoids DB dependency)
-            try:
-                from app.services.redis_cache import set_json as _set_json
+            if ohlcv_records:
+                try:
+                    from app.services.redis_cache import set_json as _set_json
 
-                ohlcv_records = []
-                for ts_idx, row in df.iterrows():
-                    epoch = int(ts_idx.timestamp()) if hasattr(ts_idx, "timestamp") else 0
-                    ohlcv_records.append({
-                        "time": epoch,
-                        "open": round(float(row.get("Open", 0)), 2),
-                        "high": round(float(row.get("High", 0)), 2),
-                        "low": round(float(row.get("Low", 0)), 2),
-                        "close": round(float(row.get("Close", 0)), 2),
-                        "volume": int(row.get("Volume", 0)),
-                    })
-                if ohlcv_records:
                     await _set_json(f"ohlcv:{symbol}:daily", ohlcv_records, ttl=14400)
-            except Exception as ohlcv_exc:
-                log.warning("ohlcv_store_error", symbol=symbol, error=str(ohlcv_exc))
+                except Exception as ohlcv_exc:
+                    log.warning("ohlcv_store_error", symbol=symbol, error=str(ohlcv_exc))
 
             log.info("indicators_stored", symbol=symbol)
             return True
@@ -322,6 +154,204 @@ class YFinanceProvider:
         except Exception as exc:
             log.warning("indicator_compute_error", symbol=symbol, error=str(exc))
             return False
+
+    @staticmethod
+    def _compute_indicator_mapping(
+        df: pd.DataFrame, symbol: str
+    ) -> tuple[dict[str, str], list[dict[str, Any]]] | None:
+        """Pure, synchronous CPU work — safe to run via ``asyncio.to_thread``.
+
+        Returns ``None`` when there's no usable numeric data after cleaning
+        (caller treats this the same as an empty download), otherwise the
+        Redis-ready indicator mapping plus daily OHLCV records for charting.
+        """
+        import pandas_ta as ta  # noqa: F811 – local import to isolate dep
+
+        # Flatten MultiIndex columns if present
+        if isinstance(df.columns, pd.MultiIndex):
+            df.columns = df.columns.get_level_values(0)
+
+        # Ensure columns are simple strings
+        df.columns = [str(c) for c in df.columns]
+
+        # Drop duplicate columns: yfinance can produce two 'Close' columns after
+        # MultiIndex flattening for certain single-ticker downloads. When that
+        # happens df["Close"] returns a 2-D DataFrame, and pandas-ta crashes with
+        # "arg must be a list, tuple, 1-d array, or Series".
+        df = df.loc[:, ~df.columns.duplicated(keep="first")]
+
+        # Coerce OHLCV columns to numeric — yfinance can return mixed types
+        # for newly-listed or recently-split stocks (e.g. object dtype columns).
+        for _col in ["Open", "High", "Low", "Close", "Volume"]:
+            if _col in df.columns:
+                df[_col] = pd.to_numeric(df[_col], errors="coerce")
+        df = df.dropna(subset=["Close", "High", "Low", "Open"])
+        df["Volume"] = df["Volume"].fillna(0)
+
+        if df.empty:
+            log.warning("yfinance_no_numeric_data", symbol=symbol)
+            return None
+
+        # --- Compute indicators ----------------------------------------
+        close = df["Close"]
+        high = df["High"]
+        low = df["Low"]
+        volume = df["Volume"]
+
+        # Helper: get current and previous value from a series
+        def _cur_prev(series):
+            if series is None or len(series) < 2:
+                cur = series.iloc[-1] if series is not None and len(series) else None
+                return cur, None
+            return series.iloc[-1], series.iloc[-2]
+
+        # RSI
+        rsi_series = ta.rsi(close, length=14)
+        rsi, prev_rsi = _cur_prev(rsi_series)
+
+        # EMAs
+        ema9_series = ta.ema(close, length=9)
+        ema9, prev_ema9 = _cur_prev(ema9_series)
+
+        ema21_series = ta.ema(close, length=21)
+        ema21, prev_ema21 = _cur_prev(ema21_series)
+
+        # SMAs
+        sma20_series = ta.sma(close, length=20)
+        sma20, prev_sma20 = _cur_prev(sma20_series)
+
+        sma50_series = ta.sma(close, length=50)
+        sma50, prev_sma50 = _cur_prev(sma50_series)
+
+        sma200_series = ta.sma(close, length=200)
+        sma200, prev_sma200 = _cur_prev(sma200_series)
+
+        # MACD
+        macd_df = ta.macd(close, fast=12, slow=26, signal=9)
+        macd_val = None
+        macd_signal = None
+        prev_macd_val = None
+        prev_macd_signal = None
+        if macd_df is not None and not macd_df.empty:
+            macd_cols = macd_df.columns.tolist()
+            for col in macd_cols:
+                if col.startswith("MACD_"):
+                    macd_val = macd_df[col].iloc[-1]
+                    prev_macd_val = macd_df[col].iloc[-2] if len(macd_df[col]) >= 2 else None
+                elif col.startswith("MACDs_"):
+                    macd_signal = macd_df[col].iloc[-1]
+                    prev_macd_signal = macd_df[col].iloc[-2] if len(macd_df[col]) >= 2 else None
+
+        # Bollinger Bands
+        bb_df = ta.bbands(close, length=20, std=2)
+        bb_upper = None
+        bb_lower = None
+        bb_mid = None
+        if bb_df is not None and not bb_df.empty:
+            bb_cols = bb_df.columns.tolist()
+            for col in bb_cols:
+                if col.startswith("BBU_"):
+                    bb_upper = bb_df[col].iloc[-1]
+                elif col.startswith("BBL_"):
+                    bb_lower = bb_df[col].iloc[-1]
+                elif col.startswith("BBM_"):
+                    bb_mid = bb_df[col].iloc[-1]
+
+        # ATR
+        atr_series = ta.atr(high, low, close, length=14)
+        atr = atr_series.iloc[-1] if atr_series is not None and len(atr_series) else None
+
+        # ADX
+        adx_df = ta.adx(high, low, close, length=14)
+        adx_val = None
+        if adx_df is not None and not adx_df.empty:
+            adx_cols = adx_df.columns.tolist()
+            for col in adx_cols:
+                if col.startswith("ADX_"):
+                    adx_val = adx_df[col].iloc[-1]
+
+        # VWAP (only meaningful for intraday but we compute a rolling proxy)
+        vwap_series = ta.vwap(high, low, close, volume)
+        vwap = vwap_series.iloc[-1] if vwap_series is not None and len(vwap_series) else None
+
+        # Volume SMA(20) — volume already coerced to numeric above
+        vol_sma20_series = ta.sma(volume, length=20)
+        vol_sma20 = (
+            vol_sma20_series.iloc[-1]
+            if vol_sma20_series is not None and len(vol_sma20_series)
+            else None
+        )
+
+        # --- Latest and previous OHLCV -----------------------------------
+        latest = df.iloc[-1]
+        prev = df.iloc[-2] if len(df) >= 2 else latest
+
+        latest_close = float(latest["Close"])
+        prev_close_val = float(prev["Close"])
+        change_pct = (
+            round(((latest_close - prev_close_val) / prev_close_val) * 100, 2)
+            if prev_close_val
+            else 0.0
+        )
+
+        # 52-week high / low
+        high_52w = float(high.tail(252).max()) if len(high) >= 252 else float(high.max())
+        low_52w = float(low.tail(252).min()) if len(low) >= 252 else float(low.min())
+
+        # --- Build mapping -----------------------------------------------
+        mapping = {
+            "open": _safe_str(latest.get("Open")),
+            "high": _safe_str(latest.get("High")),
+            "low": _safe_str(latest.get("Low")),
+            "close": _safe_str(latest.get("Close")),
+            "volume": _safe_str(latest.get("Volume")),
+            "prev_open": _safe_str(prev.get("Open")),
+            "prev_high": _safe_str(prev.get("High")),
+            "prev_low": _safe_str(prev.get("Low")),
+            "prev_close": _safe_str(prev.get("Close")),
+            "prev_volume": _safe_str(prev.get("Volume")),
+            "rsi_14": _safe_str(rsi),
+            "prev_rsi_14": _safe_str(prev_rsi),
+            "ema_9": _safe_str(ema9),
+            "prev_ema_9": _safe_str(prev_ema9),
+            "ema_21": _safe_str(ema21),
+            "prev_ema_21": _safe_str(prev_ema21),
+            "sma_20": _safe_str(sma20),
+            "prev_sma_20": _safe_str(prev_sma20),
+            "sma_50": _safe_str(sma50),
+            "prev_sma_50": _safe_str(prev_sma50),
+            "sma_200": _safe_str(sma200),
+            "prev_sma_200": _safe_str(prev_sma200),
+            "macd": _safe_str(macd_val),
+            "prev_macd": _safe_str(prev_macd_val),
+            "macd_signal": _safe_str(macd_signal),
+            "prev_macd_signal": _safe_str(prev_macd_signal),
+            "atr_14": _safe_str(atr),
+            "adx_14": _safe_str(adx_val),
+            "vwap": _safe_str(vwap),
+            "bollinger_upper": _safe_str(bb_upper),
+            "bollinger_lower": _safe_str(bb_lower),
+            "bollinger_mid": _safe_str(bb_mid),
+            "sma_20_volume": _safe_str(vol_sma20),
+            "change_pct": _safe_str(change_pct),
+            "high_52w": _safe_str(high_52w),
+            "low_52w": _safe_str(low_52w),
+        }
+
+        # --- Daily OHLCV records for chart rendering (avoids DB dependency) ---
+        ohlcv_records: list[dict[str, Any]] = []
+        for ts_idx, row in df.iterrows():
+            epoch = int(ts_idx.timestamp()) if hasattr(ts_idx, "timestamp") else 0
+            ohlcv_records.append({
+                "time": epoch,
+                "open": round(float(row.get("Open", 0)), 2),
+                "high": round(float(row.get("High", 0)), 2),
+                "low": round(float(row.get("Low", 0)), 2),
+                "close": round(float(row.get("Close", 0)), 2),
+                "volume": int(row.get("Volume", 0)),
+            })
+
+        return mapping, ohlcv_records
 
     # ------------------------------------------------------------------
     # Bulk compute

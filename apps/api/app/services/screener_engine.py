@@ -43,6 +43,16 @@ log = structlog.get_logger(__name__)
 
 _SCAN_RESULT_TTL: int = 30  # seconds
 
+# NOTE: the CPU-bound evaluation loop below (`_evaluate_matches`) was briefly
+# run via `asyncio.to_thread` on 2026-09-15 to keep it off the event loop,
+# the same fix that worked well for yfinance's indicator math. It made
+# things *worse* here: this VM was found to be actively thrashing on swap
+# (498MB RAM, ~372MB swap in use, continuous swap I/O) at the time, and
+# extra OS threads add memory overhead with no CPU-parallelism benefit for
+# pure-Python (non-numpy) work under GIL contention on a 1-2 vCPU box.
+# Reverted to a plain synchronous call — kept as its own function for
+# readability, not for threading.
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -96,6 +106,83 @@ def _enrich_symbol_data(
         data["orb_low"] = orb_data.get("low")
 
     return data
+
+
+def _evaluate_matches(
+    symbol_list: list[str],
+    indicator_results: list[dict[str, str]],
+    orb_map: dict[str, dict[str, str]],
+    dsl_root: BoolNode | None,
+    candle_histories: dict[str, list[dict[str, Any]]],
+    conditions: list[Condition],
+    pattern_name: str | None,
+) -> list[dict[str, Any]]:
+    """Pure, synchronous CPU work — safe to run via ``asyncio.to_thread``.
+
+    Everything this needs (indicator hashes, candle histories, ORB ranges)
+    is already fetched into plain dicts/lists by the caller; no I/O happens
+    in here.
+    """
+    matches: list[dict[str, Any]] = []
+
+    for sym, raw_data in zip(symbol_list, indicator_results):
+        if not raw_data:
+            continue
+
+        data = _enrich_symbol_data(raw_data, orb_map.get(sym))
+
+        # DSL-based matching (new nested AND/OR/NOT + historical offsets
+        # + rolling functions — see app.screener.dsl)
+        if dsl_root is not None:
+            eval_ctx = EvalContext(
+                indicator_data=data, candles=candle_histories.get(sym, [])
+            )
+            if not dsl_evaluate(dsl_root, eval_ctx):
+                continue
+
+        # condition-based matching (existing flat AND-only path,
+        # unchanged — still used by all 13 prebuilt scans)
+        if conditions:
+            if not evaluate_conditions(conditions, data, logic="AND"):
+                continue
+
+        # pattern-based matching -- real chronological candle history
+        # (Postgres-backed, oldest-first) rather than the indicator
+        # hash's single now+prev-bar pair, so 3-candle candlestick
+        # patterns and structural (pivot-based) patterns can actually
+        # fire.
+        detected_patterns: list[PatternMatch] = []
+        if pattern_name:
+            detected_patterns = detect_patterns(candle_histories.get(sym, []))
+            if not any(p.name == pattern_name for p in detected_patterns):
+                continue
+
+        # A scan must have at least one filter.
+        if not conditions and not pattern_name and dsl_root is None:
+            continue
+
+        matches.append(
+            {
+                "symbol": sym,
+                "data": {k: v for k, v in data.items() if v is not None},
+                "patterns": [
+                    {
+                        "name": p.name,
+                        "confidence": p.confidence,
+                        "direction": p.direction.value,
+                        "support": str(p.support) if p.support is not None else None,
+                        "resistance": (
+                            str(p.resistance) if p.resistance is not None else None
+                        ),
+                    }
+                    for p in detected_patterns
+                ],
+            }
+        )
+
+    # --- sort by relevance (RSI distance from extreme, volume ratio, etc.)
+    matches.sort(key=lambda m: m["symbol"])
+    return matches
 
 
 # ---------------------------------------------------------------------------
@@ -201,66 +288,16 @@ class ScreenerEngine:
                 if orb_data:
                     orb_map[sym] = orb_data
 
-        # --- evaluate ---------------------------------------------------------
-        matches: list[dict[str, Any]] = []
-
-        for sym, raw_data in zip(symbol_list, indicator_results):
-            if not raw_data:
-                continue
-
-            data = _enrich_symbol_data(raw_data, orb_map.get(sym))
-
-            # DSL-based matching (new nested AND/OR/NOT + historical offsets
-            # + rolling functions — see app.screener.dsl)
-            if dsl_root is not None:
-                eval_ctx = EvalContext(
-                    indicator_data=data, candles=candle_histories.get(sym, [])
-                )
-                if not dsl_evaluate(dsl_root, eval_ctx):
-                    continue
-
-            # condition-based matching (existing flat AND-only path,
-            # unchanged — still used by all 13 prebuilt scans)
-            if conditions:
-                if not evaluate_conditions(conditions, data, logic="AND"):
-                    continue
-
-            # pattern-based matching -- real chronological candle history
-            # (Postgres-backed, oldest-first) rather than the indicator
-            # hash's single now+prev-bar pair, so 3-candle candlestick
-            # patterns and structural (pivot-based) patterns can actually
-            # fire.
-            detected_patterns: list[PatternMatch] = []
-            if pattern_name:
-                detected_patterns = detect_patterns(candle_histories.get(sym, []))
-                if not any(p.name == pattern_name for p in detected_patterns):
-                    continue
-
-            # A scan must have at least one filter.
-            if not conditions and not pattern_name and dsl_root is None:
-                continue
-
-            matches.append(
-                {
-                    "symbol": sym,
-                    "data": {k: v for k, v in data.items() if v is not None},
-                    "patterns": [
-                        {
-                            "name": p.name,
-                            "confidence": p.confidence,
-                            "direction": p.direction.value,
-                            "support": str(p.support) if p.support is not None else None,
-                            "resistance": (
-                                str(p.resistance) if p.resistance is not None else None
-                            ),
-                        }
-                        for p in detected_patterns
-                    ],
-                }
-            )
-
-        # --- sort by relevance (RSI distance from extreme, volume ratio, etc.)
-        matches.sort(key=lambda m: m["symbol"])
+        # --- evaluate -----------------------------------------------------
+        matches = _evaluate_matches(
+            symbol_list,
+            indicator_results,
+            orb_map,
+            dsl_root,
+            candle_histories,
+            conditions,
+            pattern_name,
+        )
 
         # --- cache results ----------------------------------------------------
         await redis.set(

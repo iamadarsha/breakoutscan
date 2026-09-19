@@ -15,6 +15,7 @@ import { SectionHeading } from "@/components/ui/section-heading";
 import { SkeletonCard } from "@/components/ui/skeleton";
 import { PullToRefreshIndicator } from "@/components/ui/pull-to-refresh-indicator";
 import { useMarketBreadth, useMarketSectors } from "@/hooks/use-market-breadth";
+import { useActiveBreakouts } from "@/hooks/use-active-breakouts";
 import { usePrebuiltScans, useRunPrebuiltScan } from "@/hooks/use-scan-run";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import type { ScanResultItem } from "@/lib/api-types";
@@ -24,6 +25,7 @@ export default function DashboardPage() {
   const { data: breadth, isLoading: breadthLoading } = useMarketBreadth();
   const { data: sectors, isLoading: sectorsLoading } = useMarketSectors();
   const { data: scans, isLoading: scansLoading } = usePrebuiltScans();
+  const { data: activeBreakouts = [] } = useActiveBreakouts();
   const runScan = useRunPrebuiltScan();
 
   const handleRefresh = useCallback(async () => {
@@ -145,7 +147,7 @@ export default function DashboardPage() {
               </div>
             ) : (
               <StatCards
-                breakoutCount={breakoutItems.length}
+                breakoutCount={activeBreakouts.length}
                 alertCount={alertCount}
                 volumeSurgeCount={volumeItems.length}
                 breadth={breadth}
@@ -163,7 +165,7 @@ export default function DashboardPage() {
           >
             {/* Left: Breakout Feed */}
             <div className="xl:col-span-2 space-y-6 min-w-0">
-              <BreakoutFeed items={breakoutItems} />
+              <BreakoutFeed items={activeBreakouts} />
               <VolumeSurges items={volumeItems} />
             </div>
 

@@ -1,8 +1,14 @@
 """AI-powered stock suggestions with 3-layer fallback:
 
-Layer 1: RSS + Technical Scoring Engine (zero API dependency, fast)
-Layer 2: Gemini 2.0 Flash Lite (primary + backup key, 500 RPD)
-Layer 3: Groq Llama 3.3 70B / xAI Grok
+Layer 1: Gemini 3.5 Flash Lite (primary + backup key, 500 RPD) — reads the
+         fetched RSS headlines + live market data and reasons about picks.
+         This is the primary path: it runs first, every time keys are
+         configured, not just when something else fails.
+Layer 2: Groq Llama 3.3 70B / xAI Grok — alternative LLM providers, used
+         only if Gemini is unavailable or exhausted.
+Layer 3: RSS-headline + technical-scoring engine (zero API dependency) —
+         an honest last-resort fallback for when no AI provider responds
+         at all, not a substitute for AI reasoning.
 """
 
 from __future__ import annotations
@@ -20,6 +26,23 @@ from app.utils.time import IST, now_ist
 log = logging.getLogger(__name__)
 
 REDIS_KEY = "ai:suggestions"
+
+# Per-stage timeout budget. These are sized so the WORST case (every layer
+# times out and falls all the way through to the technical fallback) still
+# finishes comfortably inside the outer timeout both HTTP callers and the
+# scheduled morning job wrap this function in (see AI_SUGGESTIONS_OUTER_TIMEOUT
+# in the route module and main.py's scheduler job) — previously these numbers
+# were picked independently per layer and could sum past the outer timeout,
+# silently truncating a slow-but-otherwise-successful AI response.
+RSS_FETCH_TIMEOUT = 15
+MARKET_SUMMARY_TIMEOUT = 8
+GEMINI_PER_KEY_TIMEOUT = 15
+GEMINI_LAYER_TIMEOUT = 32  # 2 keys × 15s + overhead margin
+GROQ_TIMEOUT = 15
+XAI_TIMEOUT = 15
+ALT_AI_LAYER_TIMEOUT = 32  # groq + xai × 15s + overhead margin
+TECHNICAL_LAYER_TIMEOUT = 10
+# Worst case: 15 + 8 + 32 + 32 + 10 = 97s. Callers should wrap with >= 110s.
 
 RSS_FEEDS = [
     "https://news.google.com/rss/search?q=indian+stock+market+NSE&hl=en-IN&gl=IN&ceid=IN:en",
@@ -42,27 +65,47 @@ _SYMBOL_META: dict[str, dict[str, str]] = {}
 _NAME_KEYWORDS: dict[str, str] = {}  # lowercase keyword -> symbol
 
 def _ensure_symbol_lookup() -> None:
-    """Load Nifty 500 metadata once."""
+    """Load Nifty 500 metadata once.
+
+    A company-name keyword (e.g. "power", "steel", "motors") that belongs
+    to more than one company is genuinely ambiguous — matching a headline
+    on it would silently attribute news to the wrong stock. Such keywords
+    are dropped entirely rather than resolved by last-symbol-wins, which
+    is what a plain dict assignment would do.
+    """
     global _SYMBOL_META, _NAME_KEYWORDS
     if _SYMBOL_META:
         return
     try:
         log.info("loading nifty500_seed.json from %s (exists=%s)", _SEED_PATH, _SEED_PATH.exists())
         data = json.loads(_SEED_PATH.read_text())
+        keyword_candidates: dict[str, set[str]] = {}
+        skip_words = {"limited", "ltd", "india", "industries", "the", "and", "pvt", "corp"}
         for s in data:
             sym = s["symbol"]
             _SYMBOL_META[sym] = {
                 "name": s.get("company_name", sym),
                 "sector": s.get("sector", ""),
             }
-            # Index by symbol (uppercase)
-            _NAME_KEYWORDS[sym.upper()] = sym
-            # Index by meaningful company name words (>3 chars, skip common suffixes)
-            skip_words = {"limited", "ltd", "india", "industries", "the", "and", "pvt", "corp"}
+            # Symbol itself is unambiguous by construction (one row per symbol).
+            keyword_candidates.setdefault(sym.upper(), set()).add(sym)
+            # Meaningful company-name words (>3 chars, skip common suffixes) —
+            # collected as candidates first so collisions can be detected.
             for word in s.get("company_name", "").split():
                 w = word.strip(".,()").lower()
                 if len(w) > 3 and w not in skip_words:
-                    _NAME_KEYWORDS[w.upper()] = sym
+                    keyword_candidates.setdefault(w.upper(), set()).add(sym)
+
+        ambiguous = 0
+        for keyword, symbols in keyword_candidates.items():
+            if len(symbols) == 1:
+                _NAME_KEYWORDS[keyword] = next(iter(symbols))
+            else:
+                ambiguous += 1
+        log.info(
+            "symbol_lookup_loaded symbols=%d keywords=%d dropped_ambiguous=%d",
+            len(_SYMBOL_META), len(_NAME_KEYWORDS), ambiguous,
+        )
     except Exception as e:
         log.warning("failed to load nifty500_seed.json: %s", e)
 
@@ -132,7 +175,7 @@ async def _fetch_news_headlines() -> list[dict[str, str]]:
     import httpx
 
     headlines: list[dict[str, str]] = []
-    headers = {"User-Agent": "Mozilla/5.0 (compatible; CodexScreener/1.0)"}
+    headers = {"User-Agent": "Mozilla/5.0 (compatible; BreakoutScan/1.0)"}
     async with httpx.AsyncClient(timeout=10, headers=headers) as client:
         for url in RSS_FEEDS:
             try:
@@ -255,7 +298,10 @@ For EACH pick, provide ALL of these fields:
 - confidence: score from 1 to 10 (integer)
 - catalyst: the specific news or technical catalyst driving this pick
 - target_horizon: "intraday", "weekly", or "monthly" (must match timeframe)
-- action: "BUY" or "SELL"
+- action: "BUY" or "SELL" — judge each stock independently on its own merits. Weak,
+  overextended, or negative-news stocks should get a genuine "SELL" call, not be
+  omitted or forced into "BUY". A realistic, well-reasoned picks list is NOT
+  all-BUY — include SELL calls whenever the data and news actually support one.
 - target_pct: expected % gain/loss target (positive number)
 - stop_loss_pct: suggested stop-loss % from entry (positive number)
 - tags: array of relevant tags (e.g., ["momentum", "breakout", "earnings", "sector-rotation", "news-driven"])
@@ -302,7 +348,7 @@ async def _call_gemini(headlines: list[dict[str, str]], market_summary: str) -> 
         """Run Gemini synchronously in a thread so timeout actually works."""
         client = genai_sdk.Client(api_key=api_key)
         response = client.models.generate_content(
-            model="gemini-2.5-flash-lite",
+            model="gemini-3.5-flash-lite",
             contents=prompt,
         )
         return response.text
@@ -314,7 +360,7 @@ async def _call_gemini(headlines: list[dict[str, str]], market_summary: str) -> 
         try:
             text = await asyncio.wait_for(
                 loop.run_in_executor(None, _sync_gemini_call, api_key),
-                timeout=20,
+                timeout=GEMINI_PER_KEY_TIMEOUT,
             )
             parsed = _parse_ai_response(text)
             if parsed and _has_picks(parsed):
@@ -323,7 +369,7 @@ async def _call_gemini(headlines: list[dict[str, str]], market_summary: str) -> 
                 return parsed
             log.warning("layer1_gemini_empty key=%s", key_label)
         except asyncio.TimeoutError:
-            log.warning("layer1_gemini_timeout key=%s (20s)", key_label)
+            log.warning("layer1_gemini_timeout key=%s (%ds)", key_label, GEMINI_PER_KEY_TIMEOUT)
             last_error = TimeoutError(f"Gemini {key_label} timed out")
         except Exception as e:
             last_error = e
@@ -360,7 +406,7 @@ async def _call_alternative_ai(headlines: list[dict[str, str]], market_summary: 
                     temperature=0.7,
                     max_tokens=4096,
                 ),
-                timeout=20,
+                timeout=GROQ_TIMEOUT,
             )
             text = response.choices[0].message.content or ""
             parsed = _parse_ai_response(text)
@@ -377,7 +423,7 @@ async def _call_alternative_ai(headlines: list[dict[str, str]], market_summary: 
     # Try xAI/Grok
     if settings.xai_api_key:
         try:
-            async with httpx.AsyncClient(timeout=20) as client:
+            async with httpx.AsyncClient(timeout=XAI_TIMEOUT) as client:
                 resp = await client.post(
                     "https://api.x.ai/v1/chat/completions",
                     headers={
@@ -504,8 +550,14 @@ def _score_stock(
     data: dict[str, Any],
     headline_count: int,
     timeframe: str,
+    median_volume: float = 0.0,
 ) -> float:
-    """Composite score (0-100) for a stock in a given timeframe."""
+    """Composite score (0-100) for a stock in a given timeframe.
+
+    `median_volume` is the universe's median traded volume for this run,
+    used to score volume *relatively* — an absolute volume number is
+    meaningless without something to compare it against.
+    """
     ltp = data.get("ltp", 0)
     if ltp < 50:  # skip penny stocks
         return 0
@@ -531,26 +583,36 @@ def _score_stock(
     else:
         momentum = 5
 
-    # RSI score (0-20)
-    if rsi < 30:
-        rsi_score = 20  # oversold reversal
-    elif rsi < 40:
-        rsi_score = 15
-    elif 40 <= rsi <= 60:
-        rsi_score = 10  # neutral
-    elif rsi > 70:
-        rsi_score = 5  # overbought risk
+    # RSI score (0-20) — extremity in EITHER direction is an actionable
+    # signal (oversold -> BUY reversal candidate, overbought -> SELL
+    # candidate); direction is decided separately by _determine_action.
+    # Scoring only oversold highly would mean overbought stocks — the very
+    # candidates a SELL call should surface — never rank into the picks
+    # list at all.
+    if rsi < 30 or rsi > 70:
+        rsi_score = 20
+    elif rsi < 40 or rsi > 60:
+        rsi_score = 14
     else:
-        rsi_score = 8
+        rsi_score = 8  # neutral
 
-    # EMA crossover score (0-15)
+    # EMA trend-clarity score (0-15) — a clear trend in either direction is
+    # a stronger signal than no trend; direction is decided separately.
     if ema_9 > 0 and ema_21 > 0:
-        ema_score = 15 if ema_9 > ema_21 else 5
+        ema_score = 15
     else:
         ema_score = 8  # no data, neutral
 
-    # Volume score (0-15)
-    vol_score = min(15, 8) if volume > 0 else 5
+    # Volume score (0-15) — relative to the universe's median volume this
+    # run, so a stock trading well above its peers' typical volume scores
+    # higher than one that merely has *some* nonzero volume.
+    if median_volume > 0 and volume > 0:
+        ratio = volume / median_volume
+        vol_score = min(15.0, 5.0 + ratio * 5.0)
+    elif volume > 0:
+        vol_score = 8.0  # no universe baseline available — neutral
+    else:
+        vol_score = 5.0
 
     # Weight by timeframe
     if timeframe == "intraday":
@@ -562,14 +624,33 @@ def _score_stock(
 
 
 def _determine_action(data: dict[str, Any]) -> str:
+    """BUY vs SELL from momentum + RSI + EMA together, rather than
+    defaulting to BUY unless one narrow bearish condition is met — that
+    made SELL calls nearly impossible to reach in practice."""
     change_pct = data.get("change_pct", 0)
     ema_9 = data.get("ema_9", 0)
     ema_21 = data.get("ema_21", 0)
     rsi = data.get("rsi_14", 50)
 
-    if change_pct < -1 and ema_9 < ema_21 and rsi > 60:
-        return "SELL"
-    return "BUY"
+    has_ema = ema_9 > 0 and ema_21 > 0
+    bullish_ema = has_ema and ema_9 > ema_21
+    bearish_ema = has_ema and ema_9 < ema_21
+
+    score = 0
+    if rsi > 70:
+        score -= 2  # overbought
+    elif rsi < 30:
+        score += 2  # oversold reversal
+    if bullish_ema:
+        score += 2
+    elif bearish_ema:
+        score -= 2
+    if change_pct >= 1:
+        score += 1
+    elif change_pct <= -1:
+        score -= 1
+
+    return "SELL" if score < 0 else "BUY"
 
 
 def _compute_targets(timeframe: str, change_pct: float) -> tuple[float, float]:
@@ -651,9 +732,10 @@ def _build_rationale(
 
 
 async def _generate_technical_picks(headlines: list[dict[str, str]]) -> dict[str, list[dict[str, Any]]]:
-    """Layer 1: RSS + technical scoring, zero AI API needed.
+    """Layer 3: RSS-headline + technical-scoring fallback, zero AI API needed.
 
-    Works in two modes:
+    Used only when Gemini and Groq/xAI (Layers 1-2) are unavailable or
+    exhausted — not the primary path. Works in two modes:
     - With live price data: full technical + news scoring
     - Without price data (market closed): news-headline-only scoring
     """
@@ -661,21 +743,27 @@ async def _generate_technical_picks(headlines: list[dict[str, str]]) -> dict[str
 
     # Extract which symbols appear in headlines
     headline_map = _extract_headline_symbols(headlines)
-    log.info("layer1_headline_symbols found=%d", len(headline_map))
+    log.info("layer3_headline_symbols found=%d", len(headline_map))
 
     # Load all stock data from Redis
     all_stocks = await _load_stock_data()
-    log.info("layer1_stock_data loaded=%d", len(all_stocks))
+    log.info("layer3_stock_data loaded=%d", len(all_stocks))
 
     # Fallback: if no live price data, build stocks from headline-matched symbols
     if not all_stocks and headline_map:
-        log.info("layer1_no_price_data: using headline-only mode with %d matched symbols", len(headline_map))
+        log.info("layer3_no_price_data: using headline-only mode with %d matched symbols", len(headline_map))
         for sym in headline_map:
             if sym in _SYMBOL_META:
                 all_stocks[sym] = {"ltp": 100, "change_pct": 0, "volume": 0}
     elif not all_stocks:
-        log.warning("layer1_no_stock_data_and_no_headlines")
+        log.warning("layer3_no_stock_data_and_no_headlines")
         return {"intraday": [], "weekly": [], "monthly": []}
+
+    # Median volume across the universe this run, used to score each stock's
+    # volume relative to its peers (see _score_stock) rather than as a flat
+    # "has any volume at all" signal.
+    volumes = sorted(v.get("volume", 0) for v in all_stocks.values() if v.get("volume", 0) > 0)
+    median_volume = volumes[len(volumes) // 2] if volumes else 0.0
 
     result: dict[str, list[dict[str, Any]]] = {}
     used_symbols: set[str] = set()
@@ -688,11 +776,11 @@ async def _generate_technical_picks(headlines: list[dict[str, str]]) -> dict[str
             if data.get("ltp", 0) < 50:  # skip penny stocks
                 continue
             headline_count = len(headline_map.get(symbol, []))
-            score = _score_stock(symbol, data, headline_count, timeframe)
+            score = _score_stock(symbol, data, headline_count, timeframe, median_volume)
             scored.append((symbol, score, data))
 
         scored.sort(key=lambda x: x[1], reverse=True)
-        log.info("layer1_%s scored=%d top3=%s", timeframe, len(scored),
+        log.info("layer3_%s scored=%d top3=%s", timeframe, len(scored),
                  [(s, round(sc, 1)) for s, sc, _ in scored[:3]])
         picks: list[dict[str, Any]] = []
 
@@ -722,7 +810,7 @@ async def _generate_technical_picks(headlines: list[dict[str, str]]) -> dict[str
         result[timeframe] = picks
 
     total = sum(len(v) for v in result.values())
-    log.info("layer1_technical_success picks=%d", total)
+    log.info("layer3_technical_success picks=%d", total)
     return result
 
 
@@ -732,7 +820,7 @@ async def _generate_technical_picks(headlines: list[dict[str, str]]) -> dict[str
 async def generate_suggestions() -> dict[str, Any]:
     log.info("generate_suggestions: starting")
     try:
-        headlines = await asyncio.wait_for(_fetch_news_headlines(), timeout=30)
+        headlines = await asyncio.wait_for(_fetch_news_headlines(), timeout=RSS_FETCH_TIMEOUT)
     except asyncio.TimeoutError:
         log.warning("generate_suggestions: RSS fetch timed out")
         headlines = []
@@ -741,7 +829,7 @@ async def generate_suggestions() -> dict[str, Any]:
         headlines = []
 
     try:
-        market_summary = await asyncio.wait_for(_get_market_summary(), timeout=15)
+        market_summary = await asyncio.wait_for(_get_market_summary(), timeout=MARKET_SUMMARY_TIMEOUT)
     except asyncio.TimeoutError:
         log.warning("generate_suggestions: market summary timed out")
         market_summary = "Market data unavailable."
@@ -759,36 +847,40 @@ async def generate_suggestions() -> dict[str, Any]:
             "next_refresh": get_next_trading_day_9am().isoformat(),
         }
 
-    # Layer 1: RSS + Technical scoring engine (zero API, fast <5s)
-    source = "technical-analysis"
+    # Layer 1 (primary): Gemini actually reads the headlines + market data
+    # and reasons about picks. This runs first every time a key is
+    # configured — it is not a fallback path.
+    source = "gemini"
     picks: dict[str, list] = {"intraday": [], "weekly": [], "monthly": []}
     try:
         picks = await asyncio.wait_for(
-            _generate_technical_picks(headlines), timeout=15
+            _call_gemini(headlines, market_summary), timeout=GEMINI_LAYER_TIMEOUT
         )
     except asyncio.TimeoutError:
         log.warning("layer1_global_timeout")
     except Exception as e:
         log.warning("layer1_unexpected: %s %s", type(e).__name__, e)
 
-    # Layer 2: Gemini (20s per key × 2 keys = 40s max)
+    # Layer 2: Groq / xAI — alternative LLM providers, tried only if Gemini
+    # produced nothing usable.
     if not _has_picks(picks):
-        source = "gemini"
+        source = "groq"
         try:
             picks = await asyncio.wait_for(
-                _call_gemini(headlines, market_summary), timeout=45
+                _call_alternative_ai(headlines, market_summary), timeout=ALT_AI_LAYER_TIMEOUT
             )
         except asyncio.TimeoutError:
             log.warning("layer2_global_timeout")
         except Exception as e:
             log.warning("layer2_unexpected: %s %s", type(e).__name__, e)
 
-    # Layer 3: Groq / xAI (20s max)
+    # Layer 3 (last resort): RSS + technical scoring, zero AI API needed.
+    # Only reached if no AI provider responded at all.
     if not _has_picks(picks):
-        source = "groq"
+        source = "technical-analysis"
         try:
             picks = await asyncio.wait_for(
-                _call_alternative_ai(headlines, market_summary), timeout=25
+                _generate_technical_picks(headlines), timeout=TECHNICAL_LAYER_TIMEOUT
             )
         except asyncio.TimeoutError:
             log.warning("layer3_global_timeout")

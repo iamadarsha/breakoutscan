@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 class ActiveBreakoutOut(BaseModel):
     symbol: str
+    company_name: str | None = None
     trigger_type: str
     direction: str
     status: str
@@ -16,6 +17,10 @@ class ActiveBreakoutOut(BaseModel):
     triggered_at: datetime | None = None
     bars_confirmed: int = 0
     score: float | None = None
+    # False when this row comes from the durable breakout_events table
+    # (last confirmed signal from the most recent session) rather than the
+    # in-memory tracker — lets the frontend label it "as of last session".
+    is_live: bool = True
 
 
 class BreakoutEventOut(BaseModel):

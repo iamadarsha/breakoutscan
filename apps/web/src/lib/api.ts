@@ -1,5 +1,6 @@
 import { API_BASE_URL } from "./constants";
 import type {
+  ActiveBreakout,
   AiSuggestionsResponse,
   Alert,
   AlertCreateRequest,
@@ -214,6 +215,14 @@ export function fetchMarketIndices(): Promise<IndexData[]> {
 
 export function fetchMarketSectors(): Promise<SectorData[]> {
   return publicFetch<SectorData[]>("/api/market/sectors");
+}
+
+/* ------------------------------------------------------------------ */
+/*  Breakouts                                                          */
+/* ------------------------------------------------------------------ */
+
+export function fetchActiveBreakouts(): Promise<ActiveBreakout[]> {
+  return publicFetch<ActiveBreakout[]>("/api/breakouts/active");
 }
 
 /* ------------------------------------------------------------------ */

@@ -89,7 +89,7 @@ SYMBOL_TO_WIKI: dict[str, str] = {
 async def _fetch_wikipedia(company_name: str) -> dict[str, Any] | None:
     """Fetch company summary from Wikipedia API."""
     url = "https://en.wikipedia.org/api/rest_v1/page/summary/" + company_name.replace(" ", "_")
-    headers = {"User-Agent": "CodexScreener/1.0 (stock market app)"}
+    headers = {"User-Agent": "BreakoutScan/1.0 (stock market app)"}
 
     async with httpx.AsyncClient(timeout=8, headers=headers, follow_redirects=True) as client:
         try:
@@ -118,7 +118,7 @@ async def _search_wikipedia(query: str) -> dict[str, Any] | None:
         "limit": 3,
         "format": "json",
     }
-    headers = {"User-Agent": "CodexScreener/1.0 (stock market app)"}
+    headers = {"User-Agent": "BreakoutScan/1.0 (stock market app)"}
 
     async with httpx.AsyncClient(timeout=8, headers=headers) as client:
         try:

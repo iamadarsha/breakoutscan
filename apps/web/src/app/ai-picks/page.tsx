@@ -12,7 +12,6 @@ import {
   useRefreshAiSuggestions,
 } from "@/hooks/use-ai-suggestions";
 import { RefreshCw, Sparkles, Clock } from "lucide-react";
-import { ThinkingOrb } from "thinking-orbs";
 import { cn } from "@/lib/cn";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
@@ -125,11 +124,7 @@ export default function AiPicksPage() {
                 refresh.isPending && "cursor-not-allowed opacity-50"
               )}
             >
-              {refresh.isPending ? (
-                <ThinkingOrb state="searching" size={20} theme="auto" />
-              ) : (
-                <RefreshCw className="h-4 w-4" />
-              )}
+              <RefreshCw className={cn("h-4 w-4", refresh.isPending && "animate-spin")} />
               {refresh.isPending ? "Generating..." : "Refresh"}
             </button>
           </div>

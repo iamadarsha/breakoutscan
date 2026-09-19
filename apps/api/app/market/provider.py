@@ -30,6 +30,7 @@ import structlog
 import websockets
 
 from app.market.failover import FailoverController
+from app.market.feed_metrics import get_feed_metrics
 from app.market.normalize import DecodedMessage, MessageType, decode_feed_response
 
 log = structlog.get_logger(__name__)
@@ -139,8 +140,23 @@ class UpstoxV3Provider:
             try:
                 ws_url = await self._authorize()
                 log.info("upstox_v3_authorized", subscribed_count=len(self._subscribed_keys))
-                async with websockets.connect(ws_url, max_size=None) as ws:
+                # ping_interval=None: disables the `websockets` library's own
+                # protocol-level ping/pong keepalive. Confirmed live on
+                # 2026-09-15 that Upstox's server doesn't answer it —
+                # connections were dropping with "sent 1011 (internal error)
+                # keepalive ping timeout; no close frame received" on a
+                # regular ~50-60s cadence, measured to be *unrelated* to our
+                # own event-loop health (event-loop lag was independently
+                # confirmed under 1s throughout the same window). Upstox's
+                # own MARKET_INFO messages and continuous tick flow already
+                # prove liveness at the application level; a genuinely dead
+                # TCP connection still surfaces as a read error in the
+                # `async for raw in ws` loop below and is handled by the
+                # existing reconnect-with-backoff logic either way.
+                async with websockets.connect(ws_url, max_size=None, ping_interval=None) as ws:
                     self._ws = ws
+                    if attempt > 0:
+                        get_feed_metrics().record_reconnect()
                     attempt = 0
                     log.info("upstox_v3_ws_connected")
                     await self._subscribe(ws)

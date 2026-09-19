@@ -20,6 +20,7 @@ export default function FundamentalsPage() {
   const [appliedFilters, setAppliedFilters] =
     useState<FundamentalFilters>(defaultFilters);
   const [search, setSearch] = useState("");
+  const [activePreset, setActivePreset] = useState<string | null>(null);
 
   const { data: rawData, isLoading, isError } = useQuery({
     queryKey: ["fundamentals", appliedFilters],
@@ -49,12 +50,22 @@ export default function FundamentalsPage() {
             {/* Filter Sidebar */}
             <FilterSidebar
               filters={filters}
-              onChange={setFilters}
+              onChange={(next) => {
+                setFilters(next);
+                setActivePreset(null);
+              }}
               onApply={() => setAppliedFilters({ ...filters })}
               onReset={() => {
                 setFilters(defaultFilters);
                 setAppliedFilters(defaultFilters);
+                setActivePreset(null);
               }}
+              onApplyPreset={(name, presetFilters) => {
+                setFilters(presetFilters);
+                setAppliedFilters(presetFilters);
+                setActivePreset(name);
+              }}
+              activePreset={activePreset}
             />
 
             {/* Results */}

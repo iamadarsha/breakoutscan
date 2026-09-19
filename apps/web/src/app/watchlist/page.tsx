@@ -64,6 +64,25 @@ export default function WatchlistPage() {
     [items, livePrices]
   );
 
+  // While the auth check is in flight, show a skeleton rather than
+  // flashing the full (unauthenticated) page content or the sign-in gate
+  // before we actually know which one is correct.
+  if (authLoading) {
+    return (
+      <AppShell>
+        <PageTransition>
+          <div className="space-y-6">
+            <SectionHeading
+              title="Watchlist"
+              subtitle="Track your favourite stocks with live prices"
+            />
+            <SkeletonTable rows={5} />
+          </div>
+        </PageTransition>
+      </AppShell>
+    );
+  }
+
   // Auth gate — show sign-in prompt if not logged in
   if (!authLoading && !user) {
     return (

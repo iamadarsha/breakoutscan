@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import type { ReactNode } from "react";
@@ -24,26 +23,8 @@ const containerVariants = {
   exit: { opacity: 0, y: -8, transition: { duration: 0.2 } },
 };
 
-/**
- * Uses the View Transitions API (where supported) for smooth native
- * cross-document-style transitions, with framer-motion as fallback.
- */
 export function PageTransition({ children }: PageTransitionProps) {
   const pathname = usePathname();
-  const prevPathRef = useRef(pathname);
-
-  useEffect(() => {
-    if (pathname === prevPathRef.current) return;
-    prevPathRef.current = pathname;
-
-    // Trigger View Transitions API if available
-    if (typeof document !== "undefined" && "startViewTransition" in document) {
-      (document as unknown as { startViewTransition: (cb: () => void) => void }).startViewTransition(() => {
-        // The DOM update is already happening via React — this just wraps it
-        // so the browser captures before/after snapshots for animation.
-      });
-    }
-  }, [pathname]);
 
   return (
     <motion.div
@@ -52,7 +33,6 @@ export function PageTransition({ children }: PageTransitionProps) {
       initial="hidden"
       animate="visible"
       exit="exit"
-      style={{ viewTransitionName: "page-content" }}
     >
       {children}
     </motion.div>

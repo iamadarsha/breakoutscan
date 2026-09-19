@@ -1,7 +1,6 @@
 "use client";
 
 import { RefreshCw } from "lucide-react";
-import { ThinkingOrb } from "thinking-orbs";
 import { cn } from "@/lib/cn";
 
 interface PullToRefreshIndicatorProps {
@@ -33,14 +32,15 @@ export function PullToRefreshIndicator({
             : "bg-border/30 text-text-muted"
         )}
       >
-        {refreshing ? (
-          <ThinkingOrb state="working" size={20} theme="auto" />
-        ) : (
-          <RefreshCw
-            className="h-4 w-4 transition-transform duration-300"
-            style={{ transform: `rotate(${progress * 360}deg)` }}
-          />
-        )}
+        <RefreshCw
+          className={cn(
+            "h-4 w-4 transition-transform duration-300",
+            refreshing && "animate-spin"
+          )}
+          style={{
+            transform: refreshing ? undefined : `rotate(${progress * 360}deg)`,
+          }}
+        />
         <span>
           {refreshing
             ? "Refreshing..."

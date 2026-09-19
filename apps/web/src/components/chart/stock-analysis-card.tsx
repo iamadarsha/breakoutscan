@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ThinkingOrb } from "thinking-orbs";
 import {
   TrendingUp,
   TrendingDown,
@@ -13,6 +12,7 @@ import {
   Newspaper,
   Zap,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { fetchStockAnalysis } from "@/lib/api";
@@ -40,7 +40,7 @@ export function StockAnalysisCard({ symbol }: StockAnalysisCardProps) {
     return (
       <div className="glass-card rounded-panel p-5">
         <div className="flex items-center gap-3">
-          <ThinkingOrb state="searching" size={20} theme="auto" />
+          <Loader2 className="h-5 w-5 animate-spin text-accent" />
           <div>
             <p className="text-sm font-medium text-text-primary">Recommendation loading...</p>
             <p className="text-xs text-text-muted">Groq is reading the latest news on {symbol}</p>

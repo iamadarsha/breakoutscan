@@ -5,10 +5,24 @@ import Link from "next/link";
 import { Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
-import { SignalBadge } from "@/components/shared/signal-badge";
-import { formatPrice, formatPercent } from "@/lib/format";
+import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
-import type { ScanResultItem } from "@/lib/api-types";
+import type { ActiveBreakout } from "@/lib/api-types";
+
+const TRIGGER_LABELS: Record<string, string> = {
+  pdh_pdl: "PDH/PDL",
+  orb: "ORB",
+  "52w": "52W",
+  donchian: "Donchian",
+  nr4: "NR4",
+  nr7: "NR7",
+  inside_bar: "Inside Bar",
+  volume_breakout: "Volume",
+  vwap: "VWAP",
+  ema_cross: "EMA Cross",
+  macd_cross: "MACD Cross",
+  bollinger_squeeze: "BB Squeeze",
+};
 
 function timeAgo(dateStr?: string): string {
   if (!dateStr) return "";
@@ -46,11 +60,12 @@ function FlashPrice({ price }: { price: number }) {
 }
 
 interface BreakoutFeedProps {
-  items: ScanResultItem[];
+  items: ActiveBreakout[];
 }
 
 export function BreakoutFeed({ items }: BreakoutFeedProps) {
-  const [visibleItems, setVisibleItems] = useState<ScanResultItem[]>([]);
+  const [visibleItems, setVisibleItems] = useState<ActiveBreakout[]>([]);
+  const anyStale = items.some((i) => !i.is_live);
 
   useEffect(() => {
     setVisibleItems(items.slice(0, 20));
@@ -66,11 +81,17 @@ export function BreakoutFeed({ items }: BreakoutFeedProps) {
         </Badge>
       </div>
 
+      {anyStale && (
+        <div className="border-b border-border bg-elevated/60 px-3 py-1.5 text-[11px] text-text-secondary sm:px-5">
+          Market closed — showing the last confirmed breakouts from the most recent session
+        </div>
+      )}
+
       <div className="max-h-[420px] overflow-y-auto">
         <AnimatePresence initial={false}>
           {visibleItems.map((item, idx) => (
             <motion.div
-              key={`${item.symbol}-${idx}`}
+              key={`${item.symbol}-${item.trigger_type}-${idx}`}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 16 }}
@@ -89,31 +110,32 @@ export function BreakoutFeed({ items }: BreakoutFeedProps) {
                     <span className="font-mono text-sm font-semibold text-text-primary">
                       {item.symbol}
                     </span>
-                    <span className="text-xs text-[#8B8D9A]">{item.company_name}</span>
+                    {item.company_name && (
+                      <span className="text-xs text-[#8B8D9A]">{item.company_name}</span>
+                    )}
+                  </div>
+                  <div className="mt-0.5 text-[11px] text-text-muted">
+                    {item.is_live ? timeAgo(item.triggered_at ?? undefined) : "last session"}
                   </div>
                 </div>
 
-                {/* Price & change */}
+                {/* Price */}
                 <div className="text-right">
-                  <div className="font-mono text-sm text-white">
-                    {formatPrice(item.ltp ?? 0)}
-                  </div>
+                  {item.last_price != null && (
+                    <FlashPrice price={item.last_price} />
+                  )}
                   <div
                     className={cn(
                       "font-mono text-xs",
-                      (item.change_pct ?? 0) >= 0
-                        ? "text-[#00C896]"
-                        : "text-[#FF4757]"
+                      item.direction === "bullish" ? "text-[#00C896]" : "text-[#FF4757]"
                     )}
                   >
-                    {formatPercent(item.change_pct ?? 0)}
+                    {item.direction}
                   </div>
                 </div>
-                {item.matched_conditions && item.matched_conditions.length > 0 && (
-                  <span className="text-xs text-[#5C5D6E]">
-                    {item.matched_conditions[0]}
-                  </span>
-                )}
+                <span className="text-xs text-[#5C5D6E]">
+                  {TRIGGER_LABELS[item.trigger_type] ?? item.trigger_type}
+                </span>
               </Link>
             </motion.div>
           ))}

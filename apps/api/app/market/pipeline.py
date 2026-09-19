@@ -33,6 +33,7 @@ from app.market.event_bus import (
     publish_market_status,
 )
 from app.market.failover import FailoverController
+from app.market.feed_metrics import get_feed_metrics
 from app.market.normalize import DecodedMessage
 from app.market.provider import UpstoxV3Provider
 from app.market.state import MarketState
@@ -154,18 +155,32 @@ async def _handle_decoded_message(decoded: DecodedMessage) -> None:
     market_state = get_market_state()
 
     for tick in decoded.ticks:
+        get_feed_metrics().record_tick(tick.ltt, tick.received_at)
+
         symbol = symbol_for_instrument_key(tick.instrument_key)
         if symbol is None:
             continue  # subscribed to something outside our seeded universe
 
         change = tick.ltp - tick.close_price if tick.close_price else 0.0
         change_pct = (change / tick.close_price * 100) if tick.close_price else 0.0
+        # Prefer the feed's own day-level OHLC (real open, running high/low)
+        # over fabricating them from the current tick — that previously made
+        # open/high/low always equal ltp, useless for anything range-based
+        # (opening gap, % off high, breakout levels). Still guard high/low
+        # against this exact tick in case the feed's own figures lag by one
+        # update.
+        if tick.day_open is not None:
+            day_high = max(tick.day_high, tick.ltp) if tick.day_high is not None else tick.ltp
+            day_low = min(tick.day_low, tick.ltp) if tick.day_low is not None else tick.ltp
+            open_price = tick.day_open
+        else:
+            open_price = day_high = day_low = tick.ltp
         price_data = {
             "symbol": symbol,
             "ltp": tick.ltp,
-            "open": tick.ltp,
-            "high": tick.ltp,
-            "low": tick.ltp,
+            "open": open_price,
+            "high": day_high,
+            "low": day_low,
             "close": tick.ltp,
             "prev_close": tick.close_price,
             "change": round(change, 4),

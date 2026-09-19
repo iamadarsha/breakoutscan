@@ -13,6 +13,12 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/ai-suggestions", tags=["ai-suggestions"])
 
+# generate_suggestions()'s internal per-layer timeouts sum to a worst case
+# of ~97s (see ai_suggestions.py). This must stay comfortably above that,
+# or a slow-but-successful AI response gets silently truncated by this
+# outer timeout before the layer itself ever gets a chance to time out.
+AI_SUGGESTIONS_OUTER_TIMEOUT = 110
+
 # Track if a background generation is already running
 _generating = False
 
@@ -27,11 +33,11 @@ async def _background_generate():
     try:
         from app.services.ai_suggestions import generate_suggestions
         logger.info("background_generate: starting 3-layer generation")
-        result = await asyncio.wait_for(generate_suggestions(), timeout=90)
+        result = await asyncio.wait_for(generate_suggestions(), timeout=AI_SUGGESTIONS_OUTER_TIMEOUT)
         total = sum(len(result.get(k, [])) for k in ("intraday", "weekly", "monthly"))
         logger.info("background_generate: done source=%s picks=%d", result.get("source", "?"), total)
     except asyncio.TimeoutError:
-        logger.error("background_generate: global 90s timeout exceeded")
+        logger.error("background_generate: global %ds timeout exceeded", AI_SUGGESTIONS_OUTER_TIMEOUT)
     except Exception as e:
         logger.error("background_generate_failed: %s %s", type(e).__name__, e, exc_info=True)
     finally:
@@ -66,14 +72,14 @@ async def get_ai_suggestions(request: Request, background_tasks: BackgroundTasks
 @router.post("/refresh")
 @limiter.limit(get_settings().rate_limit_ai_refresh)
 async def refresh_ai_suggestions(request: Request):
-    """Force regenerate AI stock suggestions (may take 10-60s)."""
+    """Force regenerate AI stock suggestions (typically 3-10s via Gemini, up to ~100s worst case if every layer falls through)."""
     try:
         from app.services.ai_suggestions import generate_suggestions
 
-        result = await asyncio.wait_for(generate_suggestions(), timeout=80)
+        result = await asyncio.wait_for(generate_suggestions(), timeout=AI_SUGGESTIONS_OUTER_TIMEOUT)
         return result
     except asyncio.TimeoutError:
-        logger.error("refresh_ai_suggestions: 80s timeout exceeded")
+        logger.error("refresh_ai_suggestions: %ds timeout exceeded", AI_SUGGESTIONS_OUTER_TIMEOUT)
         raise HTTPException(status_code=504, detail="Generation timed out. Picks will be generated in background on next visit.")
     except Exception as exc:
         logger.exception("Failed to refresh AI suggestions")

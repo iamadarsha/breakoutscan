@@ -18,6 +18,28 @@ export default function AlertsPage() {
   const { data: alerts, isLoading } = useAlerts();
   const createMutation = useCreateAlert();
 
+  // While the auth check is in flight, show a skeleton rather than
+  // flashing the full (unauthenticated) page content or the sign-in gate
+  // before we actually know which one is correct.
+  if (authLoading) {
+    return (
+      <AppShell>
+        <PageTransition>
+          <div className="space-y-6">
+            <SectionHeading
+              title="Alerts"
+              subtitle="Set price and indicator alerts for your stocks"
+            />
+            <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
+              <SkeletonCard />
+              <SkeletonCard />
+            </div>
+          </div>
+        </PageTransition>
+      </AppShell>
+    );
+  }
+
   // Auth gate
   if (!authLoading && !user) {
     return (

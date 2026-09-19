@@ -123,7 +123,7 @@ export default function ChartPage() {
       <PageTransition>
         <div className="space-y-3 sm:space-y-4">
           {/* Symbol Search */}
-          <div className="relative max-w-md">
+          <div className="relative z-20 max-w-md">
             <form
               onSubmit={(e) => {
                 e.preventDefault();

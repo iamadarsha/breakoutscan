@@ -66,9 +66,9 @@ const features = [
 ];
 
 const stats = [
-  { label: "Stocks", value: "2000+", icon: BarChart3 },
-  { label: "Scans", value: "12", icon: ScanSearch },
-  { label: "Speed", value: "<1.5s", icon: Gauge },
+  { label: "Stocks", value: "500", icon: BarChart3 },
+  { label: "Scans", value: "13", icon: ScanSearch },
+  { label: "Updates", value: "Live", icon: Gauge },
   { label: "Free", value: "100%", icon: Sparkles },
 ];
 

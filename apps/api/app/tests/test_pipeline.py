@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from app.market import pipeline
+from app.market import feed_metrics, pipeline
 from app.market.normalize import DecodedMessage, MessageType, Tick
 
 
@@ -25,11 +25,13 @@ def _clear_pipeline_caches():
     pipeline.get_market_state.cache_clear()
     pipeline.get_candle_engine.cache_clear()
     pipeline._instrument_key_maps.cache_clear()  # noqa: SLF001
+    feed_metrics.get_feed_metrics.cache_clear()
     yield
     pipeline.get_failover_controller.cache_clear()
     pipeline.get_market_state.cache_clear()
     pipeline.get_candle_engine.cache_clear()
     pipeline._instrument_key_maps.cache_clear()  # noqa: SLF001
+    feed_metrics.get_feed_metrics.cache_clear()
 
 
 def test_instrument_keys_use_nse_eq_isin_convention():
@@ -131,3 +133,87 @@ async def test_handle_decoded_message_writes_price_and_ignores_unknown_instrumen
     market_state = pipeline.get_market_state()
     assert market_state.get("RELIANCE") is not None
     assert market_state.get("RELIANCE").latest_tick.ltp == 2500.5
+
+    # Both known and unknown-instrument ticks must feed freshness tracking —
+    # feed liveness is about whether *any* message arrived, not just ones
+    # for symbols in our universe.
+    snapshot = feed_metrics.get_feed_metrics().snapshot()
+    assert snapshot["last_exchange_tick_age_ms"] is not None
+    assert snapshot["last_received_age_ms"] is not None
+
+
+@pytest.mark.usefixtures("fake_redis")
+async def test_handle_decoded_message_uses_real_day_ohlc_when_available(fake_redis):
+    """Regression test for the bug caught by comparing live prices against
+    Google Finance: open/high/low were being fabricated as == ltp on every
+    tick, discarding the feed's real day-range data entirely — useless for
+    a breakout scanner (opening gap, % off high, range-based signals all
+    silently broken)."""
+    import json
+
+    symbol_to_key, _ = pipeline._instrument_key_maps()  # noqa: SLF001
+    reliance_key = symbol_to_key["RELIANCE"]
+
+    tick = Tick(
+        instrument_key=reliance_key,
+        ltp=2500.5,
+        ltt=1_700_000_000_000,
+        ltq=10,
+        close_price=2480.0,
+        vtt=123456,
+        received_at=datetime.now(timezone.utc),
+        day_open=2470.0,
+        day_high=2495.0,  # feed's high hasn't caught up to this tick yet
+        day_low=2465.0,
+    )
+    decoded = DecodedMessage(
+        type=MessageType.LIVE_FEED,
+        current_ts=1_700_000_000_000,
+        ticks=[tick],
+        market_info=None,
+    )
+
+    await pipeline._handle_decoded_message(decoded)  # noqa: SLF001
+
+    stored = json.loads(await fake_redis.get("price:RELIANCE"))
+    assert stored["open"] == 2470.0
+    # High must reflect this tick even though the feed's own "high" field
+    # (2495.0) is stale relative to the current ltp (2500.5) — the max()
+    # safety net in pipeline.py exists exactly for this lag.
+    assert stored["high"] == 2500.5
+    assert stored["low"] == 2465.0
+
+
+@pytest.mark.usefixtures("fake_redis")
+async def test_handle_decoded_message_falls_back_to_ltp_without_day_ohlc(fake_redis):
+    """When the feed genuinely has no day OHLC (e.g. bare ltpc mode), the
+    old ltp-for-everything behaviour is still the correct fallback — this
+    must not regress into crashing or writing None."""
+    import json
+
+    symbol_to_key, _ = pipeline._instrument_key_maps()  # noqa: SLF001
+    reliance_key = symbol_to_key["RELIANCE"]
+
+    tick = Tick(
+        instrument_key=reliance_key,
+        ltp=2500.5,
+        ltt=1_700_000_000_000,
+        ltq=10,
+        close_price=2480.0,
+        vtt=123456,
+        received_at=datetime.now(timezone.utc),
+        # day_open/high/low default to None
+    )
+    decoded = DecodedMessage(
+        type=MessageType.LIVE_FEED,
+        current_ts=1_700_000_000_000,
+        ticks=[tick],
+        market_info=None,
+    )
+
+    await pipeline._handle_decoded_message(decoded)  # noqa: SLF001
+
+    stored = json.loads(await fake_redis.get("price:RELIANCE"))
+    assert stored["open"] == 2500.5
+    assert stored["high"] == 2500.5
+    assert stored["low"] == 2500.5

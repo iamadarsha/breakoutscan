@@ -34,6 +34,9 @@ class _FakeResult:
     def scalars(self):
         return _FakeScalars(self._rows)
 
+    def all(self):
+        return self._rows
+
 
 class _FakeDbSession:
     def __init__(self, rows):
@@ -80,9 +83,73 @@ async def test_list_active_breakouts_filters_by_trigger_type(monkeypatch):
         "app.api.routes.breakouts.get_breakout_state_store", _seeded_store,
     )
 
+    async def _override_get_db():
+        yield _FakeDbSession([])
+
+    app.dependency_overrides[get_db] = _override_get_db
+
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         resp = await client.get("/api/breakouts/active", params={"trigger_type": "pdh_pdl"})
+
+    assert resp.status_code == 200
+    assert resp.json() == []
+
+
+async def test_list_active_breakouts_falls_back_to_last_session_when_store_empty(monkeypatch):
+    """Market closed / fresh restart with no live signal yet — the endpoint
+    must surface the last CONFIRMED breakout from the durable table instead
+    of a misleading empty list."""
+    monkeypatch.setattr(
+        "app.api.routes.breakouts.get_breakout_state_store", lambda: BreakoutStateStore(),
+    )
+
+    event_row = BreakoutEvent(
+        id=uuid.uuid4(),
+        symbol="TCS",
+        trigger_type="52w",
+        direction="bullish",
+        reference_level=Decimal("4000.0"),
+        trigger_price=Decimal("4050.0"),
+        confirmation_price=Decimal("4060.0"),
+        score=Decimal("81.0"),
+        extra={},
+        triggered_at=datetime.now(timezone.utc),
+        confirmed_at=datetime.now(timezone.utc),
+    )
+
+    async def _override_get_db():
+        yield _FakeDbSession([(event_row, "Tata Consultancy Services")])
+
+    app.dependency_overrides[get_db] = _override_get_db
+
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/api/breakouts/active")
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert len(body) == 1
+    assert body[0]["symbol"] == "TCS"
+    assert body[0]["company_name"] == "Tata Consultancy Services"
+    assert body[0]["is_live"] is False
+    assert body[0]["status"] == "CONFIRMED"
+    assert body[0]["last_price"] == 4060.0
+
+
+async def test_list_active_breakouts_stays_empty_when_store_and_db_both_empty(monkeypatch):
+    monkeypatch.setattr(
+        "app.api.routes.breakouts.get_breakout_state_store", lambda: BreakoutStateStore(),
+    )
+
+    async def _override_get_db():
+        yield _FakeDbSession([])
+
+    app.dependency_overrides[get_db] = _override_get_db
+
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/api/breakouts/active")
 
     assert resp.status_code == 200
     assert resp.json() == []

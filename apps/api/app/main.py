@@ -72,6 +72,30 @@ async def _poller_watchdog() -> None:
             delay = 5  # reset backoff
 
 
+async def _run_morning_ai_suggestions() -> None:
+    """Scheduled job body: read news + market data and generate AI picks.
+
+    Runs on the schedule set up in `lifespan()` below (trading days only,
+    IST). A failure here must never take down the scheduler itself —
+    APScheduler already isolates job exceptions, but this still logs with
+    the same shape as the rest of the app's background tasks.
+    """
+    from app.services.ai_suggestions import generate_suggestions
+
+    logger.info("morning_ai_suggestions: starting scheduled generation")
+    try:
+        result = await asyncio.wait_for(generate_suggestions(), timeout=120)
+        total = sum(len(result.get(k, [])) for k in ("intraday", "weekly", "monthly"))
+        logger.info(
+            "morning_ai_suggestions: done source=%s picks=%d",
+            result.get("source", "?"), total,
+        )
+    except asyncio.TimeoutError:
+        logger.error("morning_ai_suggestions: 120s timeout exceeded")
+    except Exception as exc:
+        logger.error("morning_ai_suggestions_failed: %s", exc, exc_info=True)
+
+
 async def _breakout_watchdog() -> None:
     """Run breakout_engine_loop forever, restarting it if it ever raises.
 
@@ -153,6 +177,13 @@ async def lifespan(_app: FastAPI):
     else:
         logger.info("UPSTOX_ANALYTICS_TOKEN not set — nse_poller is the only price feed")
 
+    from app.core.loop_monitor import get_event_loop_monitor
+
+    event_loop_monitor_task = asyncio.create_task(
+        get_event_loop_monitor().run(), name="event_loop_monitor"
+    )
+    logger.info("Event-loop lag monitor started")
+
     watchdog_task = None
     breakout_watchdog_task = None
     try:
@@ -191,10 +222,43 @@ async def lifespan(_app: FastAPI):
             exc,
         )
 
+    # Scheduled morning AI-picks generation: reads RSS/news + live market
+    # data and produces fresh picks once daily, trading days only, rather
+    # than only ever generating lazily on whoever's first request happens
+    # to land after the previous day's cache expires.
+    ai_scheduler = None
+    try:
+        from apscheduler.schedulers.asyncio import AsyncIOScheduler
+        from apscheduler.triggers.cron import CronTrigger
+
+        ai_scheduler = AsyncIOScheduler(timezone="Asia/Kolkata")
+        ai_scheduler.add_job(
+            _run_morning_ai_suggestions,
+            trigger=CronTrigger(day_of_week="mon-fri", hour=9, minute=15, timezone="Asia/Kolkata"),
+            id="morning_ai_suggestions",
+            misfire_grace_time=3600,
+            coalesce=True,
+        )
+        ai_scheduler.start()
+        logger.info("Morning AI-suggestions scheduler started (09:15 IST, Mon-Fri)")
+    except Exception as exc:
+        logger.warning("Failed to start AI-suggestions scheduler: %s", exc)
+
     logger.info("BreakoutScan API ready")
     yield
 
     # ── Shutdown ──────────────────────────────────────────────────────────────
+    if ai_scheduler is not None:
+        ai_scheduler.shutdown(wait=False)
+        logger.info("Morning AI-suggestions scheduler stopped")
+
+    event_loop_monitor_task.cancel()
+    try:
+        await event_loop_monitor_task
+    except asyncio.CancelledError:
+        pass
+    logger.info("Event-loop lag monitor stopped")
+
     _poller_running = False
     if watchdog_task is not None:
         watchdog_task.cancel()
@@ -330,6 +394,8 @@ async def health_data() -> dict:
     """
     from app.api.routes.market import _market_status_now
     from app.breakouts.engine import get_last_scan_coverage
+    from app.core.loop_monitor import get_event_loop_monitor
+    from app.market.feed_metrics import get_feed_metrics
     from app.market.pipeline import get_failover_controller, is_upstox_configured
 
     market_status = await _market_status_now()
@@ -355,4 +421,11 @@ async def health_data() -> dict:
         # a successful full scan, so this is surfaced explicitly rather
         # than assumed from universe_size alone.
         "last_scan_coverage": get_last_scan_coverage(),
+        # Feed freshness (Phase 1 observability) — exchange-tick age and
+        # transport-arrival age are kept separate so "market is quiet" is
+        # never confused with "our feed is stale/disconnected".
+        "feed_health": get_feed_metrics().snapshot(),
+        # Direct event-loop scheduling-delay measurement, not inferred from
+        # reconnects — see app/core/loop_monitor.py.
+        "event_loop_lag": get_event_loop_monitor().snapshot(),
     }

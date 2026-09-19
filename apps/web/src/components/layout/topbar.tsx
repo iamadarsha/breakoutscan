@@ -222,7 +222,7 @@ export function Topbar() {
 
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Search with autocomplete */}
-          <div className="relative" ref={dropdownRef}>
+          <div className="relative z-20" ref={dropdownRef}>
             <form onSubmit={handleSearch}>
               <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-muted z-10" />
               <input

@@ -99,6 +99,22 @@ export interface ScanResult {
   run_at: string;
 }
 
+export interface ActiveBreakout {
+  symbol: string;
+  company_name?: string | null;
+  trigger_type: string;
+  direction: string;
+  status: string;
+  reference_level: number;
+  last_price?: number | null;
+  triggered_at?: string | null;
+  bars_confirmed: number;
+  score?: number | null;
+  // False when this is the last CONFIRMED breakout from the durable table
+  // (market closed / no fresh live signal yet), not a currently-live signal.
+  is_live: boolean;
+}
+
 export interface CustomScanCondition {
   indicator: string;
   operator: string;

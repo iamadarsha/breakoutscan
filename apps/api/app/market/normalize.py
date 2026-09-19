@@ -47,6 +47,12 @@ class Tick:
     it as if it were a delta. This distinction is the fix for the
     volume-double-counting bug found in the Phase 1 audit of the old
     (unused) upstox_streamer.py, which summed a cumulative field as a delta.
+
+    ``day_open``/``day_high``/``day_low`` come from the feed's own
+    ``marketOHLC`` (the "1d" interval entry) — only present on
+    ``marketFF``/``indexFF`` (full-feed) payloads, never on bare ``ltpc``
+    or ``firstLevelWithGreeks`` modes. None when unavailable; callers must
+    not assume these are always populated.
     """
 
     instrument_key: str
@@ -56,6 +62,9 @@ class Tick:
     close_price: float  # previous day's close ("cp" in the proto)
     vtt: int | None
     received_at: datetime
+    day_open: float | None = None
+    day_high: float | None = None
+    day_low: float | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -104,8 +113,19 @@ def decode_feed_response(raw: bytes) -> DecodedMessage:
     )
 
 
+def _extract_day_ohlc(market_ohlc: "pb.MarketOHLC") -> tuple[float, float, float] | None:
+    """Pull the day-level (interval "1d") open/high/low out of a feed's
+    ``marketOHLC`` list. Returns None if the feed didn't include one —
+    callers must fall back gracefully, never fabricate a value."""
+    for entry in market_ohlc.ohlc:
+        if entry.interval == "1d":
+            return entry.open, entry.high, entry.low
+    return None
+
+
 def _extract_tick(instrument_key: str, feed: "pb.Feed", received_at: datetime) -> Tick | None:
     which = feed.WhichOneof("FeedUnion")
+    day_ohlc: tuple[float, float, float] | None = None
 
     if which == "ltpc":
         ltpc = feed.ltpc
@@ -116,9 +136,11 @@ def _extract_tick(instrument_key: str, feed: "pb.Feed", received_at: datetime) -
         if which_full == "marketFF":
             ltpc = full.marketFF.ltpc
             vtt = full.marketFF.vtt
+            day_ohlc = _extract_day_ohlc(full.marketFF.marketOHLC)
         elif which_full == "indexFF":
             ltpc = full.indexFF.ltpc
             vtt = None
+            day_ohlc = _extract_day_ohlc(full.indexFF.marketOHLC)
         else:
             return None
     elif which == "firstLevelWithGreeks":
@@ -128,6 +150,8 @@ def _extract_tick(instrument_key: str, feed: "pb.Feed", received_at: datetime) -
     else:
         return None
 
+    day_open, day_high, day_low = day_ohlc if day_ohlc else (None, None, None)
+
     return Tick(
         instrument_key=instrument_key,
         ltp=ltpc.ltp,
@@ -136,4 +160,7 @@ def _extract_tick(instrument_key: str, feed: "pb.Feed", received_at: datetime) -
         close_price=ltpc.cp,
         vtt=vtt,
         received_at=received_at,
+        day_open=day_open,
+        day_high=day_high,
+        day_low=day_low,
     )

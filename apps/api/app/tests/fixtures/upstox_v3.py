@@ -53,8 +53,18 @@ def build_full_feed_message(
     ltt: int = 1_700_000_000_000,
     cp: float = 0.0,
     current_ts: int = 1_700_000_000_500,
+    day_ohlc: tuple[float, float, float, float] | None = None,
+    extra_ohlc_intervals: list[tuple[str, float, float, float, float]] | None = None,
 ) -> bytes:
-    """A `full_d5` mode tick — includes `vtt` (cumulative day volume)."""
+    """A `full_d5` mode tick — includes `vtt` (cumulative day volume).
+
+    ``day_ohlc``, if given, is ``(open, high, low, close)`` added as the
+    "1d" interval entry in ``marketOHLC`` — the real day-range data the
+    feed provides that the normalizer must not discard.
+    ``extra_ohlc_intervals`` lets a test add other-interval entries (e.g.
+    "I1") to confirm the normalizer picks out "1d" specifically rather
+    than just taking the first entry in the list.
+    """
     fr = pb.FeedResponse()
     fr.type = pb.live_feed
     fr.currentTs = current_ts
@@ -66,6 +76,23 @@ def build_full_feed_message(
     feed.fullFeed.marketFF.ltpc.cp = cp
     feed.fullFeed.marketFF.vtt = vtt
     feed.requestMode = pb.full_d5
+
+    for interval, o, h, l, c in extra_ohlc_intervals or []:
+        entry = feed.fullFeed.marketFF.marketOHLC.ohlc.add()
+        entry.interval = interval
+        entry.open = o
+        entry.high = h
+        entry.low = l
+        entry.close = c
+
+    if day_ohlc is not None:
+        o, h, l, c = day_ohlc
+        entry = feed.fullFeed.marketFF.marketOHLC.ohlc.add()
+        entry.interval = "1d"
+        entry.open = o
+        entry.high = h
+        entry.low = l
+        entry.close = c
 
     fr.feeds[instrument_key].CopyFrom(feed)
     return fr.SerializeToString()
