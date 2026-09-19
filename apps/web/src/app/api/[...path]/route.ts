@@ -28,10 +28,18 @@ async function proxy(req: NextRequest, path: string[]): Promise<NextResponse> {
       duplex: "half",
     });
 
+    // fetch() has already decoded the body, so forwarding the upstream
+    // encoding/length headers would mislabel plain bytes as gzip and break
+    // every response large enough to be compressed by the backend's edge.
+    const responseHeaders = new Headers(res.headers);
+    responseHeaders.delete("content-encoding");
+    responseHeaders.delete("content-length");
+    responseHeaders.delete("transfer-encoding");
+
     return new NextResponse(res.body, {
       status: res.status,
       statusText: res.statusText,
-      headers: res.headers,
+      headers: responseHeaders,
     });
   } catch (err) {
     console.error("[API proxy] failed to reach backend:", url, err);
