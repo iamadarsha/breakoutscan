@@ -150,7 +150,8 @@ export function Topbar() {
       setSelectedIdx(-1);
     }
 
-    // Then try API for potentially better results
+    // Local names are cleaner, so only ask the API when the local list has no match
+    if (local.length > 0) return;
     debounceRef.current = setTimeout(async () => {
       try {
         const res = await fetchStocks({ search: query, limit: 8 });

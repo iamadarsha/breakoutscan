@@ -121,7 +121,28 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
 /*  Stocks                                                             */
 /* ------------------------------------------------------------------ */
 
-export function fetchStocks(params?: {
+interface ApiStock {
+  symbol: string;
+  company_name?: string | null;
+  sector?: string | null;
+  market_cap?: string | number | null;
+  is_nifty50?: boolean;
+  is_nifty500?: boolean;
+}
+
+function toStock(r: ApiStock): Stock {
+  return {
+    symbol: r.symbol,
+    name: r.company_name || r.symbol,
+    sector: r.sector ?? "",
+    industry: "",
+    market_cap: r.market_cap != null ? Number(r.market_cap) : 0,
+    is_nifty50: Boolean(r.is_nifty50),
+    is_nifty500: Boolean(r.is_nifty500),
+  };
+}
+
+export async function fetchStocks(params?: {
   search?: string;
   page?: number;
   limit?: number;
@@ -132,16 +153,28 @@ export function fetchStocks(params?: {
   const sp = new URLSearchParams();
   if (params?.search) sp.set("search", params.search);
   if (params?.page) sp.set("page", String(params.page));
-  if (params?.limit) sp.set("limit", String(params.limit));
+  // API paginates with page_size; the UI has always called it limit.
+  if (params?.limit) sp.set("page_size", String(params.limit));
   if (params?.nifty50) sp.set("nifty50", "true");
   if (params?.nifty500) sp.set("nifty500", "true");
   if (params?.sector) sp.set("sector", params.sector);
   const qs = sp.toString();
-  return publicFetch<StockListResponse>(`/api/stocks${qs ? `?${qs}` : ""}`);
+  const resp = await publicFetch<{
+    items?: ApiStock[];
+    total?: number;
+    page?: number;
+    page_size?: number;
+  }>(`/api/stocks${qs ? `?${qs}` : ""}`);
+  return {
+    stocks: (resp.items ?? []).map(toStock),
+    total: resp.total ?? 0,
+    page: resp.page ?? 1,
+    limit: resp.page_size ?? params?.limit ?? 0,
+  };
 }
 
-export function fetchStock(symbol: string): Promise<Stock> {
-  return publicFetch<Stock>(`/api/stocks/${symbol}`);
+export async function fetchStock(symbol: string): Promise<Stock> {
+  return toStock(await publicFetch<ApiStock>(`/api/stocks/${symbol}`));
 }
 
 /* ------------------------------------------------------------------ */

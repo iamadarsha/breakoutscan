@@ -32,6 +32,19 @@ def _safe_str(value: Any) -> str:
     return str(value)
 
 
+def _fetch_history(ticker: str, period: str, interval: str) -> pd.DataFrame:
+    """Daily OHLCV for one ticker.
+
+    Deliberately `Ticker.history`, never `yf.download`: download() stores
+    results in a module-level dict, so the concurrent worker-thread calls
+    made by bulk_compute overwrite each other and hand several symbols the
+    same (wrong) series. Ticker instances share no such state.
+    """
+    return yf.Ticker(ticker).history(
+        period=period, interval=interval, auto_adjust=True
+    )
+
+
 def _nse_ticker(symbol: str) -> str:
     """Append ``.NS`` suffix for NSE stocks if not already present."""
     symbol = symbol.strip().upper()
@@ -63,13 +76,7 @@ class YFinanceProvider:
         """
         ticker = _nse_ticker(symbol)
         try:
-            df = yf.download(
-                ticker,
-                period=period,
-                interval=interval,
-                progress=False,
-                auto_adjust=True,
-            )
+            df = _fetch_history(ticker, period, interval)
             if df.empty:
                 log.warning("yfinance_empty_data", symbol=ticker)
                 return []
@@ -118,14 +125,7 @@ class YFinanceProvider:
         """
         try:
             ticker = _nse_ticker(symbol)
-            df = await asyncio.to_thread(
-                yf.download,
-                ticker,
-                period="1y",
-                interval="1d",
-                progress=False,
-                auto_adjust=True,
-            )
+            df = await asyncio.to_thread(_fetch_history, ticker, "1y", "1d")
 
             if df.empty:
                 log.warning("yfinance_no_data_for_indicators", symbol=symbol)
