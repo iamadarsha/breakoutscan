@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { BarChart3 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { PanelHeader } from "@/components/ui/panel-header";
 import { formatPrice, formatPercent, formatVolume } from "@/lib/format";
-import { cn } from "@/lib/cn";
 import type { ScanResultItem } from "@/lib/api-types";
 
 interface VolumeSurgesProps {
@@ -13,60 +12,53 @@ interface VolumeSurgesProps {
 
 export function VolumeSurges({ items }: VolumeSurgesProps) {
   return (
-    <div className="glass-card rounded-panel">
-      <div className="flex items-center gap-2 border-b border-border px-5 py-3">
-        <BarChart3 className="h-4 w-4 text-warning" />
-        <h3 className="text-sm font-semibold text-text-primary">Volume Surges</h3>
-        <Badge variant="warning" className="ml-auto">
-          {items.length}
-        </Badge>
-      </div>
+    <div className="glass-card overflow-hidden">
+      <PanelHeader
+        title="Volume surges"
+        meta="≥ 2× 20-day average"
+        action={<Badge variant="neutral">{items.length}</Badge>}
+      />
 
-      <div className="max-h-[350px] overflow-y-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border text-xs uppercase tracking-wider text-text-secondary">
-              <th className="px-5 py-2.5 text-left">Symbol</th>
-              <th className="px-5 py-2.5 text-right">LTP</th>
-              <th className="px-5 py-2.5 text-right">Change</th>
-              <th className="px-5 py-2.5 text-right">Volume</th>
+      <div className="max-h-[360px] overflow-y-auto">
+        <table className="w-full text-data">
+          <thead className="sticky top-0 bg-elevated">
+            <tr className="border-b border-border text-label uppercase text-text-muted">
+              <th className="px-4 py-2 text-left font-semibold">Symbol</th>
+              <th className="px-4 py-2 text-right font-semibold">LTP</th>
+              <th className="px-4 py-2 text-right font-semibold">Chg %</th>
+              <th className="px-4 py-2 text-right font-semibold">Volume</th>
             </tr>
           </thead>
           <tbody>
-            {items.map((item, idx) => (
-              <tr
-                key={item.symbol}
-                className={cn(
-                  "transition hover:bg-elevated",
-                  idx % 2 === 0 ? "bg-transparent" : "bg-page/30"
-                )}
-              >
-                <td className="px-5 py-2.5">
-                  <Link
-                    href={`/chart/${item.symbol}`}
-                    className="font-mono font-semibold text-text-primary hover:text-accent"
-                  >
-                    {item.symbol}
-                  </Link>
-                </td>
-                <td className="px-5 py-2.5 text-right font-mono text-white">
-                  {formatPrice(item.ltp ?? 0)}
-                </td>
-                <td
-                  className={cn(
-                    "px-5 py-2.5 text-right font-mono",
-                    (item.change_pct ?? 0) >= 0
-                      ? "text-[#00C896]"
-                      : "text-[#FF4757]"
-                  )}
+            {items.map((item) => {
+              const up = (item.change_pct ?? 0) >= 0;
+              return (
+                <tr
+                  key={item.symbol}
+                  className="border-b border-border-subtle transition-colors last:border-0 hover:bg-accent/[0.04]"
                 >
-                  {formatPercent(item.change_pct ?? 0)}
-                </td>
-                <td className="px-5 py-2.5 text-right font-mono text-[#FFA502]">
-                  {formatVolume(item.volume ?? 0)}
-                </td>
-              </tr>
-            ))}
+                  <td className="px-4 py-2">
+                    <Link
+                      href={`/chart/${item.symbol}`}
+                      className="font-mono font-semibold text-text-primary hover:text-accent"
+                    >
+                      {item.symbol}
+                    </Link>
+                  </td>
+                  <td className="px-4 py-2 text-right font-mono tabular-nums text-text-primary">
+                    {formatPrice(item.ltp ?? 0)}
+                  </td>
+                  <td
+                    className={`px-4 py-2 text-right font-mono tabular-nums ${up ? "text-bullish" : "text-bearish"}`}
+                  >
+                    {formatPercent(item.change_pct ?? 0)}
+                  </td>
+                  <td className="px-4 py-2 text-right font-mono tabular-nums text-text-secondary">
+                    {formatVolume(item.volume ?? 0)}
+                  </td>
+                </tr>
+              );
+            })}
             {items.length === 0 && (
               <tr>
                 <td colSpan={4} className="px-5 py-12 text-center text-text-muted">

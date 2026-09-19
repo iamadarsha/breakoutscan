@@ -548,3 +548,10 @@ export function searchLocalStocks(query: string, limit = 10): NseStock[] {
 
   return [...exactPrefix, ...symbolContains, ...nameContains].slice(0, limit);
 }
+
+const _sectorBySymbol = new Map(NIFTY_500.map((s) => [s.symbol, s.sector]));
+
+/** Sector from the bundled NIFTY 500 list, for API rows that arrive without one. */
+export function sectorFor(symbol: string): string {
+  return _sectorBySymbol.get(symbol) ?? "";
+}

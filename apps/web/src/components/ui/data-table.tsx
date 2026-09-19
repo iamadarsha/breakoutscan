@@ -10,9 +10,15 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { cn } from "@/lib/cn";
+
+declare module "@tanstack/react-table" {
+  interface ColumnMeta<TData, TValue> {
+    /** Right-align figures so decimals line up down the column. */
+    numeric?: boolean;
+  }
+}
 
 interface DataTableProps<T> {
   data: T[];
@@ -51,28 +57,32 @@ export function DataTable<T>({
 
   return (
     <div className={cn("overflow-x-auto scroll-touch", className)}>
-      <table className="w-full text-sm">
-        <thead>
+      <table className="w-full text-data">
+        <thead className="bg-elevated">
           {table.getHeaderGroups().map((hg) => (
             <tr key={hg.id} className="border-b border-border">
               {hg.headers.map((header) => {
                 const canSort = header.column.getCanSort();
                 const sorted = header.column.getIsSorted();
+                const numeric = header.column.columnDef.meta?.numeric;
                 return (
                   <th
                     key={header.id}
+                    aria-sort={sorted === "asc" ? "ascending" : sorted === "desc" ? "descending" : undefined}
                     className={cn(
-                      "px-3 sm:px-4 py-3 text-left text-[11px] sm:text-xs font-medium uppercase tracking-wider text-text-secondary whitespace-nowrap",
-                      canSort && "cursor-pointer select-none hover:text-text-primary"
+                      "whitespace-nowrap px-3 py-2 text-label font-semibold uppercase text-text-muted sm:px-4",
+                      numeric ? "text-right" : "text-left",
+                      canSort && "cursor-pointer select-none hover:text-text-primary",
+                      sorted && "text-text-primary"
                     )}
                     onClick={header.column.getToggleSortingHandler()}
                   >
-                    <div className="flex items-center gap-1.5">
+                    <div className={cn("inline-flex items-center gap-1", numeric && "flex-row-reverse")}>
                       {header.isPlaceholder
                         ? null
                         : flexRender(header.column.columnDef.header, header.getContext())}
                       {canSort && (
-                        <span className="text-text-muted">
+                        <span className={sorted ? "text-accent" : "text-text-muted/60"}>
                           {sorted === "asc" ? (
                             <ArrowUp className="h-3 w-3" />
                           ) : sorted === "desc" ? (
@@ -90,25 +100,27 @@ export function DataTable<T>({
           ))}
         </thead>
         <tbody>
-          {table.getRowModel().rows.map((row, idx) => (
-            <motion.tr
+          {table.getRowModel().rows.map((row) => (
+            <tr
               key={row.id}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, ease: "easeOut", delay: idx * 0.05 }}
               onClick={() => onRowClick?.(row.original)}
               className={cn(
-                "border-b border-border transition",
-                idx % 2 === 0 ? "bg-transparent" : "bg-page/40",
-                onRowClick && "cursor-pointer hover:bg-elevated"
+                "border-b border-border-subtle transition-colors last:border-0",
+                onRowClick && "cursor-pointer hover:bg-accent/[0.04]"
               )}
             >
               {row.getVisibleCells().map((cell) => (
-                <td key={cell.id} className="px-3 sm:px-4 py-3 text-text-primary whitespace-nowrap">
+                <td
+                  key={cell.id}
+                  className={cn(
+                    "whitespace-nowrap px-3 py-2 text-text-primary sm:px-4",
+                    cell.column.columnDef.meta?.numeric && "text-right font-mono tabular-nums"
+                  )}
+                >
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
               ))}
-            </motion.tr>
+            </tr>
           ))}
           {table.getRowModel().rows.length === 0 && (
             <tr>

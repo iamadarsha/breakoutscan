@@ -27,9 +27,9 @@ export function ApiOfflineBanner() {
   return (
     <div
       role="alert"
-      className="flex items-center justify-center gap-2 bg-amber-500/15 border-b border-amber-500/30 px-4 py-2 text-xs text-amber-400"
+      className="flex items-center justify-center gap-2 border-b border-warning/30 bg-warning/10 px-4 py-1.5 text-label font-medium text-warning"
     >
-      <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+      <span className="inline-block h-1.5 w-1.5 rounded-full bg-warning animate-pulse" />
       {message}
     </div>
   );

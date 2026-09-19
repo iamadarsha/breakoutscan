@@ -30,18 +30,18 @@ export function CompanyInfoPanel({ symbol }: CompanyInfoPanelProps) {
 
   return (
     <div className="rounded-panel border border-border bg-card p-4 sm:p-5">
-      <h3 className="mb-2 text-sm font-semibold text-text-primary flex items-center gap-2">
+      <h3 className="mb-2 text-data font-semibold text-text-primary flex items-center gap-2">
         <Building2 className="h-4 w-4 text-text-muted" />
         {info.name ?? symbol}
       </h3>
 
       {info.description && (
-        <p className="text-xs leading-relaxed text-text-secondary mb-3">
+        <p className="text-label leading-relaxed text-text-secondary mb-3">
           {info.description}
         </p>
       )}
 
-      <div className="flex flex-wrap gap-4 text-xs text-text-muted">
+      <div className="flex flex-wrap gap-4 text-label text-text-muted">
         {info.sector && (
           <span>
             Sector: <span className="text-text-secondary">{info.sector}</span>

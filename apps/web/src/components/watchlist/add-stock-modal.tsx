@@ -60,7 +60,8 @@ export function AddStockModal({
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by symbol or name..."
           autoFocus
-          className="h-10 w-full rounded-lg border border-border bg-page pl-10 pr-3 text-sm text-text-primary placeholder-text-muted outline-none focus:border-accent"
+          className="h-10 w-full rounded-lg border border-border bg-card pl-10 pr-3 text-data text-text-primary placeholder-text-muted outline-none transition-colors hover:border-accent/40 focus:border-accent focus:shadow-glow"
+          aria-label="Search stocks to add"
         />
       </div>
 
@@ -76,20 +77,20 @@ export function AddStockModal({
                 onClose();
               }}
               className={cn(
-                "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left transition",
+                "flex w-full items-center justify-between rounded-lg px-3 py-2 text-left transition-colors",
                 isAdded
                   ? "cursor-not-allowed opacity-40"
-                  : "hover:bg-elevated"
+                  : "hover:bg-accent/5"
               )}
             >
               <div>
-                <span className="font-mono text-sm font-semibold text-text-primary">
+                <span className="font-mono text-data font-semibold text-text-primary">
                   {stock.symbol}
                 </span>
-                <div className="text-xs text-text-secondary">{stock.name}</div>
+                <div className="text-label text-text-secondary">{stock.name}</div>
               </div>
               {isAdded ? (
-                <span className="text-xs text-text-muted">Added</span>
+                <span className="text-label text-text-muted">Added</span>
               ) : (
                 <Plus className="h-4 w-4 text-accent" />
               )}
@@ -97,12 +98,12 @@ export function AddStockModal({
           );
         })}
         {search.length >= 1 && stocks.length === 0 && (
-          <div className="py-8 text-center text-sm text-text-muted">
+          <div className="py-8 text-center text-data text-text-muted">
             No stocks found
           </div>
         )}
         {search.length === 0 && (
-          <div className="py-8 text-center text-sm text-text-muted">
+          <div className="py-8 text-center text-data text-text-muted">
             Type to search for stocks
           </div>
         )}

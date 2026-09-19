@@ -57,15 +57,15 @@ const filterFields: {
   label: string;
   placeholder: string;
 }[] = [
-  { key: "pe_min", label: "PE Min", placeholder: "e.g. 5" },
-  { key: "pe_max", label: "PE Max", placeholder: "e.g. 30" },
-  { key: "pb_min", label: "PB Min", placeholder: "e.g. 0.5" },
-  { key: "pb_max", label: "PB Max", placeholder: "e.g. 5" },
-  { key: "market_cap_min", label: "Market Cap Min (Cr)", placeholder: "e.g. 1000" },
-  { key: "market_cap_max", label: "Market Cap Max (Cr)", placeholder: "e.g. 100000" },
-  { key: "roe_min", label: "ROE Min (%)", placeholder: "e.g. 15" },
-  { key: "dividend_yield_min", label: "Div Yield Min (%)", placeholder: "e.g. 1" },
-  { key: "debt_to_equity_max", label: "D/E Max", placeholder: "e.g. 1" },
+  { key: "pe_min", label: "PE min", placeholder: "e.g. 5" },
+  { key: "pe_max", label: "PE max", placeholder: "e.g. 30" },
+  { key: "pb_min", label: "PB min", placeholder: "e.g. 0.5" },
+  { key: "pb_max", label: "PB max", placeholder: "e.g. 5" },
+  { key: "market_cap_min", label: "Cap min (₹ Cr)", placeholder: "e.g. 1000" },
+  { key: "market_cap_max", label: "Cap max (₹ Cr)", placeholder: "e.g. 100000" },
+  { key: "roe_min", label: "ROE min %", placeholder: "e.g. 15" },
+  { key: "dividend_yield_min", label: "Yield min %", placeholder: "e.g. 1" },
+  { key: "debt_to_equity_max", label: "D/E max", placeholder: "e.g. 1" },
 ];
 
 export function FilterSidebar({
@@ -82,36 +82,36 @@ export function FilterSidebar({
   };
 
   return (
-    <div className="rounded-panel border border-border bg-card p-5">
-      <div className="mb-3 flex items-center gap-2">
+    <div className="rounded-panel border border-border bg-card p-4 shadow-card">
+      <div className="mb-2 flex items-center gap-2">
         <Sparkles className="h-4 w-4 text-accent" />
-        <h3 className="text-sm font-semibold text-text-primary">Popular Screens</h3>
+        <h3 className="text-panel font-semibold text-text-primary">Popular screens</h3>
       </div>
-      <div className="mb-5 space-y-1.5">
+      <div className="mb-4 space-y-1.5">
         {PRESET_SCREENS.map((preset) => (
           <button
             key={preset.name}
             type="button"
             onClick={() => onApplyPreset(preset.name, preset.filters)}
             className={cn(
-              "flex w-full flex-col items-start rounded-xl border px-3 py-2 text-left transition",
+              "flex w-full flex-col items-start rounded-lg border px-3 py-1.5 text-left transition-colors",
               activePreset === preset.name
-                ? "border-accent bg-accent/10"
-                : "border-border/60 hover:border-accent/40 hover:bg-elevated"
+                ? "border-accent/50 bg-accent/10"
+                : "border-border hover:border-accent/40 hover:bg-accent/5"
             )}
           >
-            <span className="text-xs font-semibold text-text-primary">{preset.name}</span>
-            <span className="text-[10px] text-text-muted">{preset.description}</span>
+            <span className="text-data font-semibold text-text-primary">{preset.name}</span>
+            <span className="text-label text-text-muted">{preset.description}</span>
           </button>
         ))}
       </div>
 
-      <div className="mb-4 flex items-center gap-2 border-t border-border/60 pt-4">
+      <div className="mb-3 flex items-center gap-2 border-t border-border pt-4">
         <Filter className="h-4 w-4 text-accent" />
-        <h3 className="text-sm font-semibold text-text-primary">Custom Filters</h3>
+        <h3 className="text-panel font-semibold text-text-primary">Custom filters</h3>
       </div>
 
-      <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-x-2 gap-y-2.5">
         {filterFields.map((field) => (
           <Input
             key={field.key}
@@ -124,13 +124,15 @@ export function FilterSidebar({
         ))}
       </div>
 
-      <div className="mt-5 flex gap-2">
+      <div className="mt-4 flex gap-2">
         <Button onClick={onApply} className="flex-1">
-          Apply Filters
+          Apply filters
         </Button>
         <button
           onClick={onReset}
-          className="rounded-full border border-border p-2.5 text-text-secondary transition hover:bg-elevated hover:text-text-primary"
+          aria-label="Reset filters"
+          title="Reset filters"
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-text-secondary transition-colors hover:border-accent/40 hover:bg-accent/5 hover:text-text-primary"
         >
           <RotateCcw className="h-4 w-4" />
         </button>

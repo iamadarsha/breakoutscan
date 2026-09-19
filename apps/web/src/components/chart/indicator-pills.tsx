@@ -17,11 +17,12 @@ export function IndicatorPills({ active, onToggle }: IndicatorPillsProps) {
           <button
             key={opt.value}
             onClick={() => onToggle(opt.value)}
+            aria-pressed={isActive}
             className={cn(
-              "rounded-full border px-3 py-1 text-xs font-medium transition",
+              "rounded-md border px-3 py-2 text-label font-medium transition-colors lg:py-1",
               isActive
-                ? "border-accent bg-accent/[0.12] text-accent-hover"
-                : "border-border text-text-secondary hover:border-border hover:text-text-primary"
+                ? "border-accent/50 bg-accent/10 text-accent"
+                : "border-border bg-card text-text-secondary hover:border-accent/40 hover:text-text-primary"
             )}
           >
             {opt.label}

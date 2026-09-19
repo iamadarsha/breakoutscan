@@ -2,16 +2,17 @@ import Link from "next/link";
 
 export default function NotFoundPage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-page px-6 text-center text-text-primary">
-      <div className="text-xs uppercase tracking-[0.22em] text-text-muted">
-        404
-      </div>
-      <h1 className="text-3xl font-bold">Page not found</h1>
+    <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-page px-6 text-center text-text-primary">
+      <div className="text-label font-semibold uppercase text-text-muted">404</div>
+      <h1 className="text-title font-semibold">Page not found</h1>
+      <p className="max-w-md text-data text-text-secondary">
+        That page doesn&apos;t exist or has moved.
+      </p>
       <Link
-        href="/"
-        className="inline-flex h-10 items-center justify-center rounded-lg border border-accent px-4 text-sm font-semibold text-accent"
+        href="/dashboard"
+        className="mt-2 inline-flex h-9 items-center justify-center rounded-lg bg-accent-solid px-4 text-data font-semibold text-white transition-colors hover:bg-accent-solid-hover"
       >
-        Return home
+        Go to dashboard
       </Link>
     </div>
   );

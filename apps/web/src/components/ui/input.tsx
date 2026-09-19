@@ -1,4 +1,4 @@
-import { forwardRef, type InputHTMLAttributes } from "react";
+import { forwardRef, useId, type InputHTMLAttributes } from "react";
 import { cn } from "@/lib/cn";
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -8,31 +8,32 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ className, label, error, id, ...props }, ref) => {
+    // Always associate the label, even when the caller doesn't pass an id.
+    const autoId = useId();
+    const inputId = id ?? autoId;
     return (
-      <div className="flex flex-col gap-2">
+      <div className="flex min-w-0 flex-col gap-1">
         {label && (
           <label
-            htmlFor={id}
-            className="text-xs font-medium uppercase tracking-wider text-text-secondary"
+            htmlFor={inputId}
+            className="truncate text-micro font-semibold uppercase text-text-muted"
           >
             {label}
           </label>
         )}
         <input
           ref={ref}
-          id={id}
+          id={inputId}
+          aria-invalid={error ? true : undefined}
           className={cn(
-            "h-11 rounded-xl border border-border bg-page px-4 text-sm text-text-primary placeholder-text-muted outline-none transition-all duration-200",
-            "focus:border-accent focus:ring-2 focus:ring-accent/15",
-            "hover:border-border",
-            error && "border-bearish focus:border-bearish focus:ring-bearish/20",
+            "h-9 w-full min-w-0 rounded-lg border border-border bg-card px-3 font-mono text-data tabular-nums text-text-primary placeholder-text-muted outline-none transition-colors",
+            "hover:border-accent/40 focus:border-accent focus:shadow-glow",
+            error && "border-bearish focus:border-bearish",
             className
           )}
           {...props}
         />
-        {error && (
-          <span className="text-xs text-bearish">{error}</span>
-        )}
+        {error && <span className="text-label text-bearish">{error}</span>}
       </div>
     );
   }

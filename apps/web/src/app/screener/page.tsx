@@ -23,6 +23,11 @@ export default function ScreenerPage() {
   const [activeScanId, setActiveScanId] = useState<string | null>(null);
   const [result, setResult] = useState<ScanResult | null>(null);
 
+  const closeResults = () => {
+    setResult(null);
+    setActiveScanId(null);
+  };
+
   const handleRunPrebuilt = (scanId: string) => {
     if (runPrebuilt.isPending) return;
     setActiveScanId(scanId);
@@ -49,7 +54,7 @@ export default function ScreenerPage() {
   return (
     <AppShell>
       <PageTransition>
-        <div className="space-y-6">
+        <div className="space-y-5">
           <SectionHeading
             title="Screener"
             subtitle="Run prebuilt scans or build your own custom conditions"
@@ -61,8 +66,11 @@ export default function ScreenerPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <h3 className="mb-3 text-sm font-semibold text-text-secondary">
-              Prebuilt Scans
+            <h3 className="mb-2 flex items-baseline gap-2 text-panel font-semibold text-text-primary">
+              Prebuilt scans
+              <span className="text-label font-normal text-text-muted">
+                {scans ? `${scans.length} ready to run` : ""}
+              </span>
             </h3>
             {scansLoading ? (
               <SkeletonTable rows={3} />
@@ -72,6 +80,13 @@ export default function ScreenerPage() {
                 activeScanId={activeScanId}
                 onRunScan={handleRunPrebuilt}
                 isLoading={runPrebuilt.isPending}
+                results={
+                  <AnimatePresence>
+                    {result && activeScanId !== "custom" && (
+                      <ScanResultsPanel result={result} onClose={closeResults} />
+                    )}
+                  </AnimatePresence>
+                }
               />
             )}
           </motion.div>
@@ -88,16 +103,10 @@ export default function ScreenerPage() {
             />
           </motion.div>
 
-          {/* Results */}
+          {/* Custom scan results sit under the builder that produced them */}
           <AnimatePresence>
-            {result && (
-              <ScanResultsPanel
-                result={result}
-                onClose={() => {
-                  setResult(null);
-                  setActiveScanId(null);
-                }}
-              />
+            {result && activeScanId === "custom" && (
+              <ScanResultsPanel result={result} onClose={closeResults} />
             )}
           </AnimatePresence>
         </div>

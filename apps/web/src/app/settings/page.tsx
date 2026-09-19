@@ -3,29 +3,34 @@
 import { AppShell } from "@/components/layout/app-shell";
 import { PageTransition } from "@/components/layout/page-transition";
 import { SectionHeading } from "@/components/ui/section-heading";
+import { PanelHeader } from "@/components/ui/panel-header";
+import { Badge } from "@/components/ui/badge";
 import { useTheme } from "@/components/providers/theme-provider";
-import { Sun, Moon, Database, Globe, Info, ExternalLink, LogOut } from "lucide-react";
-import { cn } from "@/lib/cn";
-import { motion } from "framer-motion";
+import { useApiHealth } from "@/hooks/use-api-health";
+import { Sun, Moon, LogOut, LogIn } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 
-const DATA_SOURCES = [
-  { name: "Yahoo Finance", desc: "OHLCV data & technical indicators", status: "active" },
-  { name: "Indian Stock API", desc: "Live NSE market data & indices", status: "active" },
-  { name: "Gemini 3.5 Flash Lite", desc: "AI-powered stock suggestions", status: "active" },
-  { name: "Google News RSS", desc: "Market news aggregation", status: "active" },
+// What each provider does, so a data problem can be traced to its source.
+const PROVIDERS = [
+  { name: "Upstox + NSE", desc: "Live prices, indices, market breadth" },
+  { name: "Yahoo Finance", desc: "Price history, indicators, fundamentals" },
+  { name: "Gemini 3.5 Flash Lite", desc: "AI Picks (news-driven)" },
+  { name: "Groq", desc: "Per-stock BUY / HOLD / SELL call" },
+  { name: "Google News RSS", desc: "Market headlines" },
 ];
 
-const item = {
-  hidden: { opacity: 0, y: 12 },
-  visible: { opacity: 1, y: 0 },
-};
+const ABOUT = [
+  { label: "Universe", value: "NIFTY 500" },
+  { label: "Prebuilt scans", value: "13" },
+  { label: "Breakout triggers", value: "12" },
+];
 
 export default function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
+  const { data: health, isError, isPending } = useApiHealth();
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
   useEffect(() => {
@@ -41,134 +46,105 @@ export default function SettingsPage() {
     router.refresh();
   };
 
+  const serviceOk = !isError && health?.status !== "degraded";
+
   return (
     <AppShell>
       <PageTransition>
-        <div className="space-y-6">
-          <SectionHeading
-            title="Settings"
-            subtitle="Application preferences and data source configuration"
-          />
+        <div className="mx-auto max-w-3xl space-y-5">
+          <SectionHeading title="Settings" subtitle="Appearance, data sources and your account" />
 
-          {/* Theme */}
-          <motion.div variants={item} className="glass-card rounded-panel p-5">
-            <h3 className="mb-4 text-sm font-semibold text-text-primary">Appearance</h3>
-            <div className="flex items-center justify-between">
+          <section className="glass-card overflow-hidden">
+            <PanelHeader title="Appearance" />
+            <div className="flex items-center justify-between gap-4 px-4 py-3">
               <div>
-                <p className="text-sm text-text-secondary">Theme</p>
-                <p className="text-xs text-text-muted">Switch between dark and light mode</p>
+                <p className="text-data font-medium text-text-primary">Theme</p>
+                <p className="text-label text-text-muted">
+                  Currently {theme === "dark" ? "dark" : "light"}. Applies to this visit only.
+                </p>
               </div>
               <button
                 onClick={toggleTheme}
-                className={cn(
-                  "flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium transition",
-                  "hover:border-accent/30 hover:text-text-primary"
-                )}
+                className="flex h-9 items-center gap-2 rounded-lg border border-border bg-card px-3 text-data font-medium text-text-primary transition-colors hover:border-accent/40 hover:bg-accent/5"
               >
-                {theme === "dark" ? (
-                  <>
-                    <Sun className="h-4 w-4" /> Light Mode
-                  </>
-                ) : (
-                  <>
-                    <Moon className="h-4 w-4" /> Dark Mode
-                  </>
-                )}
+                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                Switch to {theme === "dark" ? "light" : "dark"}
               </button>
             </div>
-          </motion.div>
+          </section>
 
-          {/* Data Sources */}
-          <motion.div variants={item} className="glass-card rounded-panel p-5">
-            <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-text-primary">
-              <Database className="h-4 w-4" /> Data Sources
-            </h3>
-            <div className="space-y-3">
-              {DATA_SOURCES.map((src) => (
-                <div
-                  key={src.name}
-                  className="flex items-center justify-between rounded-lg border border-border bg-page px-4 py-3"
+          <section className="glass-card overflow-hidden">
+            <PanelHeader
+              title="Data sources"
+              meta="what powers each part of the app"
+              action={
+                isPending ? (
+                  <Badge variant="neutral">Checking…</Badge>
+                ) : (
+                  <Badge variant={serviceOk ? "bullish" : "warning"}>
+                    {serviceOk ? "All services operational" : "Degraded"}
+                  </Badge>
+                )
+              }
+            />
+            <ul>
+              {PROVIDERS.map((p) => (
+                <li
+                  key={p.name}
+                  className="flex items-baseline justify-between gap-4 border-b border-border-subtle px-4 py-2.5 last:border-0"
                 >
-                  <div>
-                    <p className="text-sm font-medium text-text-primary">{src.name}</p>
-                    <p className="text-xs text-text-muted">{src.desc}</p>
-                  </div>
-                  <span className="flex items-center gap-1.5 text-xs font-semibold text-bullish">
-                    <span className="h-1.5 w-1.5 rounded-full bg-bullish" />
-                    Connected
-                  </span>
+                  <span className="text-data font-medium text-text-primary">{p.name}</span>
+                  <span className="text-right text-label text-text-secondary">{p.desc}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section className="glass-card overflow-hidden">
+            <PanelHeader title="About" />
+            <dl>
+              {ABOUT.map((row) => (
+                <div
+                  key={row.label}
+                  className="flex items-center justify-between border-b border-border-subtle px-4 py-2.5 text-data last:border-0"
+                >
+                  <dt className="text-text-secondary">{row.label}</dt>
+                  <dd className="font-mono font-medium tabular-nums text-text-primary">{row.value}</dd>
                 </div>
               ))}
-            </div>
-          </motion.div>
+            </dl>
+          </section>
 
-          {/* App Info */}
-          <motion.div variants={item} className="glass-card rounded-panel p-5">
-            <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-text-primary">
-              <Info className="h-4 w-4" /> About
-            </h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-text-secondary">App Version</span>
-                <span className="font-mono text-text-primary">0.1.0</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-text-secondary">Universe</span>
-                <span className="font-mono text-text-primary">NIFTY 500</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-text-secondary">Indicators</span>
-                <span className="font-mono text-text-primary">14 (RSI, EMA, SMA, MACD, BB...)</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-text-secondary">Prebuilt Scans</span>
-                <span className="font-mono text-text-primary">13</span>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Account */}
-          <motion.div variants={item} className="glass-card rounded-panel p-5">
-            <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-text-primary">
-              <LogOut className="h-4 w-4" /> Account
-            </h3>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-text-secondary">
-                  {userEmail ? `Signed in as ${userEmail}` : "Not signed in"}
+          <section className="glass-card overflow-hidden">
+            <PanelHeader title="Account" />
+            <div className="flex items-center justify-between gap-4 px-4 py-3">
+              <div className="min-w-0">
+                <p className="truncate text-data font-medium text-text-primary">
+                  {userEmail ? userEmail : "Not signed in"}
                 </p>
-                <p className="text-xs text-text-muted">
-                  {userEmail ? "Sign out to switch accounts or re-authenticate" : "Sign in to access watchlist, alerts, and more"}
+                <p className="text-label text-text-muted">
+                  {userEmail
+                    ? "Sign out to switch accounts"
+                    : "Sign in for a personal watchlist and alerts"}
                 </p>
               </div>
               {userEmail ? (
                 <button
                   onClick={handleSignOut}
-                  className="flex items-center gap-2 rounded-full border border-red-500/30 px-4 py-2 text-sm font-medium text-red-400 transition hover:bg-red-500/10"
+                  className="flex h-9 shrink-0 items-center gap-2 rounded-lg border border-bearish/30 px-3 text-data font-medium text-bearish transition-colors hover:bg-bearish/10"
                 >
-                  <LogOut className="h-4 w-4" /> Sign Out
+                  <LogOut className="h-4 w-4" /> Sign out
                 </button>
               ) : (
                 <button
                   onClick={() => router.push("/login")}
-                  className="flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-4 py-2 text-sm font-medium text-accent transition hover:bg-accent/20"
+                  className="flex h-9 shrink-0 items-center gap-2 rounded-lg bg-accent-solid px-3 text-data font-semibold text-white transition-colors hover:bg-accent-solid-hover"
                 >
-                  Sign In
+                  <LogIn className="h-4 w-4" /> Sign in
                 </button>
               )}
             </div>
-          </motion.div>
-
-          {/* Coming Soon */}
-          <motion.div variants={item} className="rounded-panel border border-dashed border-border bg-card/40 p-6 text-center">
-            <Globe className="mx-auto h-8 w-8 text-text-muted" />
-            <p className="mt-3 text-sm font-medium text-text-secondary">
-              More settings coming soon
-            </p>
-            <p className="mt-1 text-xs text-text-muted">
-              Notification preferences, portfolio tracking, and custom watchlist alerts
-            </p>
-          </motion.div>
+          </section>
         </div>
       </PageTransition>
     </AppShell>

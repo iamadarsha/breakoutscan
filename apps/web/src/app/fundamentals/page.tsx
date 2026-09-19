@@ -33,7 +33,7 @@ export default function FundamentalsPage() {
   return (
     <AppShell>
       <PageTransition>
-        <div className="space-y-6">
+        <div className="space-y-5">
           <SectionHeading
             title="Fundamentals"
             subtitle="Screen stocks by fundamental metrics"
@@ -46,7 +46,7 @@ export default function FundamentalsPage() {
             }
           />
 
-          <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
+          <div className="grid gap-5 lg:grid-cols-[280px_minmax(0,1fr)]">
             {/* Filter Sidebar */}
             <FilterSidebar
               filters={filters}
@@ -69,7 +69,7 @@ export default function FundamentalsPage() {
             />
 
             {/* Results */}
-            <div className="space-y-4">
+            <div className="min-w-0 space-y-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
                 <input
@@ -77,7 +77,7 @@ export default function FundamentalsPage() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Filter results by symbol..."
-                  className="h-10 w-full max-w-sm rounded-lg border border-border bg-page pl-10 pr-3 text-sm text-text-primary placeholder-text-muted outline-none focus:border-accent"
+                  className="h-10 w-full max-w-sm rounded-lg border border-border bg-page pl-10 pr-3 text-data text-text-primary placeholder-text-muted outline-none focus:border-accent"
                 />
               </div>
 

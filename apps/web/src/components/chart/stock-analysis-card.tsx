@@ -42,8 +42,8 @@ export function StockAnalysisCard({ symbol }: StockAnalysisCardProps) {
         <div className="flex items-center gap-3">
           <Loader2 className="h-5 w-5 animate-spin text-accent" />
           <div>
-            <p className="text-sm font-medium text-text-primary">Recommendation loading...</p>
-            <p className="text-xs text-text-muted">Groq is reading the latest news on {symbol}</p>
+            <p className="text-data font-medium text-text-primary">Recommendation loading...</p>
+            <p className="text-label text-text-muted">Groq is reading the latest news on {symbol}</p>
           </div>
         </div>
         <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-elevated">
@@ -59,7 +59,7 @@ export function StockAnalysisCard({ symbol }: StockAnalysisCardProps) {
   if (isError || !data) {
     return (
       <div className="glass-card rounded-panel p-5 text-center">
-        <p className="text-sm text-text-muted">AI analysis unavailable for {symbol} right now.</p>
+        <p className="text-data text-text-muted">AI analysis unavailable for {symbol} right now.</p>
       </div>
     );
   }
@@ -87,12 +87,12 @@ export function StockAnalysisCard({ symbol }: StockAnalysisCardProps) {
     <div className="glass-card rounded-panel p-4 sm:p-5">
       <div className="mb-3 flex items-start justify-between">
         <div className="flex items-center gap-2">
-          <Badge variant={actionVariant} className="gap-1 text-sm">
+          <Badge variant={actionVariant} className="gap-1 text-data">
             <ActionIcon className="h-3.5 w-3.5" />
             {data.action}
           </Badge>
           {poweredBy && (
-            <span className="flex items-center gap-1 text-[10px] text-text-muted">
+            <span className="flex items-center gap-1 text-micro text-text-muted">
               <Sparkles className="h-3 w-3" /> {poweredBy}
             </span>
           )}
@@ -104,8 +104,8 @@ export function StockAnalysisCard({ symbol }: StockAnalysisCardProps) {
           Groq-derived score, not a stand-in for real analyst consensus. */}
       <div className="mb-3">
         <div className="mb-1.5 flex items-center justify-between">
-          <span className="text-[10px] font-medium text-text-muted">AI Score</span>
-          <span className="text-[10px] font-semibold text-text-secondary">
+          <span className="text-micro font-medium text-text-muted">AI Score</span>
+          <span className="text-micro font-semibold text-text-secondary">
             {confidenceLabel} confidence · {confidence}/10
           </span>
         </div>
@@ -126,13 +126,13 @@ export function StockAnalysisCard({ symbol }: StockAnalysisCardProps) {
       {data.catalyst && (
         <div className="mb-3 flex gap-1.5 rounded-md bg-elevated/60 px-2.5 py-2">
           <Zap className="h-3 w-3 flex-shrink-0 mt-0.5 text-accent" />
-          <p className="text-[11px] leading-snug text-text-secondary">{data.catalyst}</p>
+          <p className="text-label leading-snug text-text-secondary">{data.catalyst}</p>
         </div>
       )}
 
       {/* Targets */}
       {(data.target_pct ?? 0) > 0 && (
-        <div className="mb-3 flex items-center gap-3 text-[10px] text-text-muted">
+        <div className="mb-3 flex items-center gap-3 text-micro text-text-muted">
           <span className="flex items-center gap-1">
             {isSell ? <TrendingDown className="h-3 w-3" /> : <Target className="h-3 w-3" />}
             Target: {data.target_pct}%
@@ -150,7 +150,7 @@ export function StockAnalysisCard({ symbol }: StockAnalysisCardProps) {
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="flex w-full items-center justify-between rounded-full border border-border/60 px-2.5 py-1.5 text-[11px] font-medium text-text-secondary transition hover:border-accent/30 hover:text-text-primary"
+        className="flex w-full items-center justify-between rounded-lg border border-border px-3 py-2.5 text-label font-medium text-text-secondary transition hover:border-accent/30 hover:text-text-primary"
       >
         <span>Why this call</span>
         <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", expanded && "rotate-180")} />
@@ -158,7 +158,7 @@ export function StockAnalysisCard({ symbol }: StockAnalysisCardProps) {
 
       {expanded && (
         <div className="mt-2.5 space-y-2.5 border-t border-border/60 pt-2.5">
-          <p className="text-[11px] leading-relaxed text-text-secondary">{data.rationale}</p>
+          <p className="text-label leading-relaxed text-text-secondary">{data.rationale}</p>
 
           {tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
@@ -181,7 +181,7 @@ export function StockAnalysisCard({ symbol }: StockAnalysisCardProps) {
               </div>
               <ul className="space-y-1">
                 {sources.slice(0, 3).map((src, i) => (
-                  <li key={i} className="text-[10px] leading-snug">
+                  <li key={i} className="text-micro leading-snug">
                     {src.url ? (
                       <a
                         href={src.url}
@@ -203,7 +203,7 @@ export function StockAnalysisCard({ symbol }: StockAnalysisCardProps) {
         </div>
       )}
 
-      <p className="mt-3 text-[10px] leading-relaxed text-text-muted">
+      <p className="mt-3 text-micro leading-relaxed text-text-muted">
         Informational only, not financial advice. Always do your own research.
       </p>
     </div>

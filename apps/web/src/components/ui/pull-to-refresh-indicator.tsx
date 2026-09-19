@@ -26,7 +26,7 @@ export function PullToRefreshIndicator({
     >
       <div
         className={cn(
-          "flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-medium transition-all",
+          "flex items-center gap-2 rounded-full px-4 py-1.5 text-label font-medium transition-all",
           ready || refreshing
             ? "bg-accent/15 text-accent"
             : "bg-border/30 text-text-muted"

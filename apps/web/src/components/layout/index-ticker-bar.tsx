@@ -41,26 +41,32 @@ export function IndexTickerBar() {
 
   if (indices.length === 0) return null;
 
+  // One quiet 32px strip of index levels — reference data, so it stays low in the hierarchy.
   return (
-    <div className="flex w-full overflow-x-auto border-b border-border bg-card/60 px-4 py-1.5 text-[11px] scrollbar-hide">
-      <div className="flex items-center gap-6 whitespace-nowrap">
-        {indices.map((idx) => (
-          <span key={idx.symbol} className="flex items-center gap-1.5">
-            <span className="font-medium text-text-secondary">{idx.name}</span>
-            <span className="font-mono text-text-primary">
-              {formatPrice(idx.value)}
+    <div
+      className="scrollbar-hide flex h-8 w-full items-center overflow-x-auto border-b border-border bg-card px-3 sm:px-5"
+      aria-label="Market indices"
+    >
+      <div className="flex items-center gap-5 whitespace-nowrap text-label">
+        {indices.map((idx) => {
+          const up = idx.change_pct >= 0;
+          return (
+            <span key={idx.symbol} className="flex items-baseline gap-1.5">
+              <span className="font-medium uppercase text-text-muted">{idx.name}</span>
+              <span className="font-mono font-semibold tabular-nums text-text-primary">
+                {formatPrice(idx.value)}
+              </span>
+              <span
+                className={cn(
+                  "font-mono tabular-nums",
+                  up ? "text-bullish" : "text-bearish"
+                )}
+              >
+                <span className="mr-0.5 text-[8px]">{up ? "▲" : "▼"}</span>{formatPercent(Math.abs(idx.change_pct)).replace("+", "")}
+              </span>
             </span>
-            <span
-              className={cn(
-                "font-mono",
-                idx.change_pct >= 0 ? "text-bullish" : "text-bearish"
-              )}
-            >
-              {idx.change_pct >= 0 ? "+" : ""}
-              {formatPercent(idx.change_pct)}
-            </span>
-          </span>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

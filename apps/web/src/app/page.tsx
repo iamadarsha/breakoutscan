@@ -103,7 +103,7 @@ export default function HomePage() {
           <img
             src="/logo-mark.svg"
             alt="BreakoutScan"
-            className="mb-6 h-14 w-14 rounded-2xl shadow-accent"
+            className="mb-6 h-14 w-14 rounded-2xl"
           />
           <h1 className="mb-4 text-5xl font-bold tracking-tight text-text-primary sm:text-6xl lg:text-7xl">
             <span className="gradient-text">BreakoutScan</span>
@@ -115,7 +115,7 @@ export default function HomePage() {
           </p>
           <Link
             href="/dashboard"
-            className="group inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#7c5cfc] to-[#5b3fd4] px-8 py-3.5 text-sm font-semibold text-white shadow-accent transition hover:shadow-lg hover:brightness-110"
+            className="group inline-flex h-11 items-center gap-2 rounded-lg bg-accent-solid px-6 text-panel font-semibold text-white shadow-accent transition-colors hover:bg-accent-solid-hover"
           >
             Open Dashboard
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -138,7 +138,7 @@ export default function HomePage() {
             >
               <stat.icon className="mb-2 h-5 w-5 text-accent" />
               <span className="text-2xl font-bold text-text-primary">{stat.value}</span>
-              <span className="mt-1 text-xs text-text-secondary">{stat.label}</span>
+              <span className="mt-1 text-label text-text-secondary">{stat.label}</span>
             </motion.div>
           ))}
         </div>
@@ -170,14 +170,14 @@ export default function HomePage() {
                 <feat.icon className="h-5 w-5" />
               </div>
               <h3 className="mb-2 text-base font-semibold text-text-primary">{feat.title}</h3>
-              <p className="text-sm leading-relaxed text-text-secondary">{feat.description}</p>
+              <p className="text-data leading-relaxed text-text-secondary">{feat.description}</p>
             </motion.div>
           ))}
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border px-6 py-8 text-center text-xs text-text-muted">
+      <footer className="border-t border-border px-6 py-8 text-center text-label text-text-muted">
         BreakoutScan &mdash; Built for Indian markets. Not financial advice.
       </footer>
     </div>

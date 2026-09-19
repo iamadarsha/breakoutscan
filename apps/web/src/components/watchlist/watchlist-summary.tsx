@@ -1,7 +1,6 @@
 "use client";
 
-import { TrendingUp, TrendingDown, BarChart3, Eye } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/cn";
 import type { LivePrice } from "@/lib/api-types";
 
 interface WatchlistSummaryProps {
@@ -9,44 +8,41 @@ interface WatchlistSummaryProps {
   count: number;
 }
 
+function compactVolume(v: number): string {
+  if (v >= 1e7) return `${(v / 1e7).toFixed(1)}Cr`;
+  if (v >= 1e5) return `${(v / 1e5).toFixed(1)}L`;
+  return v.toString();
+}
+
+/** Same segmented strip as the dashboard KPIs: neutral numbers, colour only where there is a direction. */
 export function WatchlistSummary({ prices, count }: WatchlistSummaryProps) {
   const priceList = Object.values(prices);
-  const gainers = priceList.filter((p) => p.change_pct > 0).length;
-  const losers = priceList.filter((p) => p.change_pct < 0).length;
-  const totalVolume = priceList.reduce((sum, p) => sum + p.volume, 0);
+  const gainers = priceList.filter((p) => (p.change_pct ?? 0) > 0).length;
+  const losers = priceList.filter((p) => (p.change_pct ?? 0) < 0).length;
+  const totalVolume = priceList.reduce((sum, p) => sum + (p.volume ?? 0), 0);
 
-  const stats = [
-    { label: "Watching", value: count.toString(), icon: Eye, color: "text-accent" },
-    { label: "Gainers", value: gainers.toString(), icon: TrendingUp, color: "text-bullish" },
-    { label: "Losers", value: losers.toString(), icon: TrendingDown, color: "text-bearish" },
-    {
-      label: "Total Volume",
-      value: totalVolume >= 1e7
-        ? `${(totalVolume / 1e7).toFixed(1)}Cr`
-        : totalVolume >= 1e5
-          ? `${(totalVolume / 1e5).toFixed(1)}L`
-          : totalVolume.toString(),
-      icon: BarChart3,
-      color: "text-warning",
-    },
+  const cells = [
+    { label: "Watching", value: count.toString(), tone: "text-text-primary" },
+    { label: "Gainers", value: gainers.toString(), tone: gainers > 0 ? "text-bullish" : "text-text-primary" },
+    { label: "Losers", value: losers.toString(), tone: losers > 0 ? "text-bearish" : "text-text-primary" },
+    { label: "Total volume", value: compactVolume(totalVolume), tone: "text-text-primary" },
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
-      {stats.map((stat) => (
-        <Card key={stat.label} className="flex items-center gap-3">
-          <div className={`rounded-lg bg-elevated p-2 ${stat.color}`}>
-            <stat.icon className="h-4 w-4" />
-          </div>
-          <div>
-            <div className="text-[10px] uppercase tracking-wider text-text-muted">
-              {stat.label}
-            </div>
-            <div className="font-mono text-lg font-semibold text-text-primary">
-              {stat.value}
-            </div>
-          </div>
-        </Card>
+    <div className="grid grid-cols-2 overflow-hidden rounded-panel border border-border bg-card shadow-card lg:grid-cols-4">
+      {cells.map((cell, i) => (
+        <div
+          key={cell.label}
+          className={cn(
+            "px-4 py-3",
+            i > 0 && "lg:border-l lg:border-border",
+            i % 2 === 1 && "border-l border-border lg:border-l",
+            i >= 2 && "border-t border-border lg:border-t-0"
+          )}
+        >
+          <div className="text-label font-semibold uppercase text-text-muted">{cell.label}</div>
+          <div className={cn("font-mono text-kpi font-semibold tabular-nums", cell.tone)}>{cell.value}</div>
+        </div>
       ))}
     </div>
   );

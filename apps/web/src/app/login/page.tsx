@@ -31,7 +31,7 @@ export default function LoginPage() {
         {/* Back to app */}
         <button
           onClick={() => router.push("/")}
-          className="flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary transition"
+          className="flex items-center gap-1.5 py-2 text-data text-text-secondary transition-colors hover:text-text-primary"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Dashboard
@@ -42,12 +42,12 @@ export default function LoginPage() {
           <img
             src="/logo-mark.svg"
             alt="BreakoutScan"
-            className="mx-auto h-16 w-16 rounded-2xl shadow-accent"
+            className="mx-auto h-16 w-16 rounded-2xl"
           />
           <h1 className="mt-4 text-xl font-semibold text-text-primary">
             BreakoutScan
           </h1>
-          <p className="mt-1 text-sm text-text-secondary">
+          <p className="mt-1 text-data text-text-secondary">
             India&apos;s real-time NSE/BSE breakout screener
           </p>
         </div>
@@ -56,7 +56,7 @@ export default function LoginPage() {
         <button
           onClick={handleGoogleSignIn}
           disabled={loading}
-          className="flex w-full items-center justify-center gap-3 rounded-full border border-border bg-card px-4 py-3 text-sm font-medium text-text-primary transition hover:bg-elevated disabled:opacity-50"
+          className="flex h-11 w-full items-center justify-center gap-3 rounded-lg border border-border bg-card px-4 text-data font-semibold text-text-primary shadow-card transition-colors hover:border-accent/40 hover:bg-elevated disabled:opacity-50"
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24">
             <path
@@ -80,10 +80,10 @@ export default function LoginPage() {
         </button>
 
         {error && (
-          <p className="text-center text-xs text-red-400">{error}</p>
+          <p className="text-center text-label text-bearish">{error}</p>
         )}
 
-        <p className="text-center text-xs text-text-muted">
+        <p className="text-center text-label text-text-muted">
           Sign in to access your personal watchlist and alerts.
           By signing in, you agree to use this tool for informational purposes
           only. Not financial advice.

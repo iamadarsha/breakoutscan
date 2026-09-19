@@ -46,9 +46,9 @@ export function ConditionRow({
   canRemove = true,
 }: ConditionRowProps) {
   const selectClass = cn(
-    "h-9 rounded-lg border border-border bg-page px-3 text-sm text-text-primary outline-none transition",
-    "focus:border-accent focus:ring-1 focus:ring-accent-glow",
-    "hover:border-border"
+    "h-9 rounded-lg border border-border bg-card px-3 text-data text-text-primary outline-none transition-colors",
+    "focus:border-accent focus:shadow-glow",
+    "hover:border-accent/40"
   );
 
   return (
@@ -56,6 +56,7 @@ export function ConditionRow({
       <select
         value={indicator}
         onChange={(e) => onChange("indicator", e.target.value)}
+        aria-label="Indicator"
         className={cn(selectClass, "flex-[2]")}
       >
         {INDICATORS.map((ind) => (
@@ -68,6 +69,7 @@ export function ConditionRow({
       <select
         value={operator}
         onChange={(e) => onChange("operator", e.target.value)}
+        aria-label="Operator"
         className={cn(selectClass, "flex-1")}
       >
         {OPERATORS.map((op) => (
@@ -82,20 +84,23 @@ export function ConditionRow({
         value={value}
         onChange={(e) => onChange("value", e.target.value)}
         placeholder="Value"
+        aria-label="Value"
         className={cn(
-          "h-9 flex-1 rounded-lg border border-border bg-page px-3 text-sm text-text-primary placeholder-text-muted outline-none transition",
-          "focus:border-accent focus:ring-1 focus:ring-accent-glow"
+          "h-9 flex-1 rounded-lg border border-border bg-card px-3 text-data text-text-primary placeholder-text-muted outline-none transition-colors",
+          "focus:border-accent focus:shadow-glow hover:border-accent/40"
         )}
       />
 
       <button
         onClick={onRemove}
         disabled={!canRemove}
+        aria-label="Remove condition"
+        title={canRemove ? "Remove condition" : "At least one condition is required"}
         className={cn(
-          "rounded-full p-2 transition",
+          "rounded-lg p-2 transition-colors",
           canRemove
-            ? "text-text-secondary hover:bg-elevated hover:text-bearish"
-            : "cursor-not-allowed text-border"
+            ? "text-text-secondary hover:bg-bearish/10 hover:text-bearish"
+            : "cursor-not-allowed text-text-muted/40"
         )}
       >
         <Trash2 className="h-4 w-4" />

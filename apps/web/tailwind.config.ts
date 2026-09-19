@@ -5,37 +5,50 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        page: "var(--bg-page)",
-        sidebar: "var(--bg-sidebar)",
-        card: "var(--bg-card)",
-        elevated: "var(--bg-elevated)",
-        border: "var(--border)",
-        "border-subtle": "var(--border-subtle)",
+        // rgb(var(--x-rgb) / <alpha-value>) is what makes bg-accent/10 etc. compile.
+        page: "rgb(var(--bg-page-rgb) / <alpha-value>)",
+        sidebar: "rgb(var(--bg-sidebar-rgb) / <alpha-value>)",
+        card: "rgb(var(--bg-card-rgb) / <alpha-value>)",
+        elevated: "rgb(var(--bg-elevated-rgb) / <alpha-value>)",
+        border: "rgb(var(--border-rgb) / <alpha-value>)",
+        "border-subtle": "rgb(var(--border-subtle-rgb) / <alpha-value>)",
         accent: {
-          DEFAULT: "var(--accent)",
-          hover: "var(--accent-hover)",
+          DEFAULT: "rgb(var(--accent-rgb) / <alpha-value>)",
+          hover: "rgb(var(--accent-hover-rgb) / <alpha-value>)",
+          solid: "rgb(var(--accent-solid-rgb) / <alpha-value>)",
+          "solid-hover": "rgb(var(--accent-solid-hover-rgb) / <alpha-value>)",
           glow: "var(--accent-glow)",
         },
-        bullish: "var(--bullish)",
-        bearish: "var(--bearish)",
-        warning: "var(--warning)",
-        info: "var(--info)",
-        "text-primary": "var(--text-primary)",
-        "text-secondary": "var(--text-secondary)",
-        "text-muted": "var(--text-muted)",
+        bullish: "rgb(var(--bullish-rgb) / <alpha-value>)",
+        bearish: "rgb(var(--bearish-rgb) / <alpha-value>)",
+        warning: "rgb(var(--warning-rgb) / <alpha-value>)",
+        info: "rgb(var(--info-rgb) / <alpha-value>)",
+        "text-primary": "rgb(var(--text-primary-rgb) / <alpha-value>)",
+        "text-secondary": "rgb(var(--text-secondary-rgb) / <alpha-value>)",
+        "text-muted": "rgb(var(--text-muted-rgb) / <alpha-value>)",
       },
       boxShadow: {
-        card: "0 4px 24px rgba(0, 0, 0, 0.5)",
-        glass: "inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 4px 16px rgba(0, 0, 0, 0.25)",
-        accent: "0 4px 20px rgba(124, 92, 252, 0.25)",
-        glow: "0 0 20px rgba(124, 92, 252, 0.15)",
+        card: "var(--shadow-panel)",
+        glass: "var(--shadow-panel)",
+        pop: "var(--shadow-pop)",
+        accent: "0 1px 2px rgba(16, 24, 40, 0.12)",
+        glow: "0 0 0 3px var(--accent-glow)",
       },
       borderRadius: {
-        panel: "20px",
+        panel: "10px",
+      },
+      fontSize: {
+        // Type scale: one step per level of the hierarchy.
+        micro: ["10px", { lineHeight: "14px" }],   // overlines, units
+        label: ["11px", { lineHeight: "16px" }],   // column heads, KPI labels, meta
+        data: ["13px", { lineHeight: "20px" }],                              // body / table cells
+        panel: ["14px", { lineHeight: "20px" }],                             // panel titles
+        title: ["22px", { lineHeight: "28px", letterSpacing: "-0.01em" }],   // page title
+        kpi: ["28px", { lineHeight: "32px", letterSpacing: "-0.02em" }],     // headline numbers
       },
       fontFamily: {
-        sans: ["var(--font-inter)"],
-        mono: ["var(--font-jetbrains-mono)"],
+        sans: ["var(--font-sans)", "system-ui", "sans-serif"],
+        mono: ["var(--font-mono)", "ui-monospace", "monospace"],
       },
       animation: {
         "flash-bullish": "flash-bullish 0.6s ease-out",

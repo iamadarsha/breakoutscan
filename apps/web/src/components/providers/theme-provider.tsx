@@ -28,7 +28,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
     const meta = document.getElementById("theme-color-meta") as HTMLMetaElement | null;
-    if (meta) meta.content = theme === "dark" ? "#0a0e1a" : "#f0f2f8";
+    if (meta) meta.content = theme === "dark" ? "#0a0d13" : "#f2f4f7";
   }, [theme]);
 
   const toggleTheme = () =>
@@ -50,10 +50,10 @@ export function ThemedToaster() {
       position="bottom-right"
       toastOptions={{
         style: {
-          background: "var(--bg-elevated)",
+          background: "var(--bg-card)",
           border: "1px solid var(--border)",
           color: "var(--text-primary)",
-          backdropFilter: "blur(12px)",
+          boxShadow: "var(--shadow-pop)",
         },
       }}
     />

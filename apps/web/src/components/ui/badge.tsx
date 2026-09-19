@@ -9,24 +9,20 @@ interface BadgeProps {
   className?: string;
 }
 
+// Tinted fill + same-hue text, no border: reads as a status, not a button.
 const variantStyles: Record<BadgeVariant, string> = {
-  bullish:
-    "bg-bullish/[0.12] text-bullish border-bullish/25",
-  bearish:
-    "bg-bearish/[0.12] text-bearish border-bearish/25",
-  neutral:
-    "bg-text-secondary/[0.12] text-text-secondary border-text-secondary/25",
-  accent:
-    "bg-accent/[0.12] text-accent-hover border-accent/25",
-  warning:
-    "bg-warning/[0.12] text-warning border-warning/25",
+  bullish: "bg-bullish/10 text-bullish",
+  bearish: "bg-bearish/10 text-bearish",
+  neutral: "bg-text-secondary/10 text-text-secondary",
+  accent: "bg-accent/10 text-accent",
+  warning: "bg-warning/10 text-warning",
 };
 
 export function Badge({ variant = "neutral", children, className }: BadgeProps) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold",
+        "inline-flex items-center rounded-md px-2 py-0.5 text-label font-semibold tabular-nums",
         variantStyles[variant],
         className
       )}

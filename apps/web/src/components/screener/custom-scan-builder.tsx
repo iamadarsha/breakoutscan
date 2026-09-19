@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Plus, Play } from "lucide-react";
 import { ConditionRow } from "./condition-row";
 import { Button } from "@/components/ui/button";
+import { PanelHeader } from "@/components/ui/panel-header";
 import { cn } from "@/lib/cn";
 import type { CustomScanCondition } from "@/lib/api-types";
 
@@ -63,23 +64,22 @@ export function CustomScanBuilder({ onRun, isLoading }: CustomScanBuilderProps) 
   };
 
   const selectClass = cn(
-    "h-9 rounded-lg border border-border bg-page px-3 text-sm text-text-primary outline-none transition appearance-none cursor-pointer",
-    "focus:border-accent hover:border-border",
-    "[&>option]:bg-[#0d1117] [&>option]:text-white"
+    "h-9 rounded-lg border border-border bg-card px-3 text-data text-text-primary outline-none transition-colors appearance-none cursor-pointer",
+    "focus:border-accent hover:border-accent/40",
+    "[&>option]:bg-card [&>option]:text-text-primary"
   );
 
   return (
-    <div className="glass-card rounded-panel p-5 overflow-visible">
-      <h3 className="mb-4 text-sm font-semibold text-text-primary">
-        Custom Scan Builder
-      </h3>
-
-      <div className="mb-4 flex items-center gap-3">
+    <div className="glass-card overflow-hidden">
+      <PanelHeader title="Custom scan builder" meta="combine your own conditions" />
+      <div className="p-4">
+      <div className="mb-4 flex items-end gap-3">
         <div className="flex flex-col gap-1">
-          <label className="text-[10px] uppercase tracking-wider text-text-muted">
+          <label htmlFor="scan-universe" className="text-micro font-semibold uppercase text-text-muted">
             Universe
           </label>
           <select
+            id="scan-universe"
             value={universe}
             onChange={(e) => setUniverse(e.target.value)}
             className={selectClass}
@@ -90,10 +90,11 @@ export function CustomScanBuilder({ onRun, isLoading }: CustomScanBuilderProps) 
           </select>
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-[10px] uppercase tracking-wider text-text-muted">
+          <label htmlFor="scan-timeframe" className="text-micro font-semibold uppercase text-text-muted">
             Timeframe
           </label>
           <select
+            id="scan-timeframe"
             value={timeframe}
             onChange={(e) => setTimeframe(e.target.value)}
             className={selectClass}
@@ -123,7 +124,7 @@ export function CustomScanBuilder({ onRun, isLoading }: CustomScanBuilderProps) 
       <div className="flex items-center gap-3">
         <button
           onClick={addCondition}
-          className="flex items-center gap-1.5 rounded-full border border-dashed border-border px-3 py-2 text-xs text-text-secondary transition hover:border-accent hover:text-text-primary"
+          className="flex h-8 items-center gap-1.5 rounded-lg border border-dashed border-border px-3 text-label font-medium text-text-secondary transition-colors hover:border-accent hover:text-accent"
         >
           <Plus className="h-3.5 w-3.5" />
           Add Condition
@@ -137,6 +138,7 @@ export function CustomScanBuilder({ onRun, isLoading }: CustomScanBuilderProps) 
           <Play className="h-3.5 w-3.5" />
           {isLoading ? "Running..." : "Run Scan"}
         </Button>
+      </div>
       </div>
     </div>
   );

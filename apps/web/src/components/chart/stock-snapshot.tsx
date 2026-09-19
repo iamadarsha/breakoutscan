@@ -1,6 +1,5 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { PriceCell } from "@/components/ui/price-cell";
 import { formatPercent, formatVolume, formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -11,77 +10,75 @@ interface StockSnapshotProps {
   livePrice?: LivePrice;
 }
 
+/**
+ * Quote bar. Hierarchy: price (largest) → symbol → change → name/sector → day range.
+ * Everything a trader checks before looking at the chart sits in one 88px band.
+ */
 export function StockSnapshot({ stock, livePrice }: StockSnapshotProps) {
   const hasPrice = livePrice != null && livePrice.ltp > 0;
   const changePct = livePrice?.change_pct ?? 0;
   const change = livePrice?.change ?? 0;
+  const up = change >= 0;
+
+  const stats = livePrice
+    ? [
+        { label: "Open", value: formatPrice(livePrice.open) },
+        { label: "High", value: formatPrice(livePrice.high) },
+        { label: "Low", value: formatPrice(livePrice.low) },
+        { label: "Volume", value: formatVolume(livePrice.volume) },
+      ]
+    : [];
 
   return (
-    <div className="rounded-panel border border-border bg-card p-5">
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="flex items-center gap-3">
-            <h2 className="text-xl font-bold text-text-primary">
+    <div className="rounded-panel border border-border bg-card shadow-card">
+      <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-3 px-4 py-3">
+        <div className="min-w-0">
+          <div className="flex items-baseline gap-2">
+            <h1 className="font-mono text-title font-semibold text-text-primary">
               {stock?.symbol ?? "---"}
-            </h2>
-            {hasPrice ? (
-              <Badge variant={changePct >= 0 ? "bullish" : "bearish"}>
-                {formatPercent(changePct)}
-              </Badge>
-            ) : (
-              <span className="text-xs text-text-muted">Market Closed</span>
+            </h1>
+            {stock?.sector && (
+              <span className="rounded bg-elevated px-1.5 py-0.5 text-micro font-semibold uppercase text-text-secondary">
+                {stock.sector}
+              </span>
             )}
           </div>
-          <p className="mt-1 text-sm text-text-secondary">
-            {stock?.name ?? "Loading..."}
-          </p>
-          {stock?.sector && (
-            <span className="mt-1 inline-block text-xs text-text-muted">
-              {stock.sector}
-            </span>
-          )}
+          <p className="mt-0.5 truncate text-data text-text-secondary">{stock?.name ?? "Loading…"}</p>
         </div>
-        <div className="text-right">
+
+        <div className="flex items-baseline gap-3">
           {hasPrice ? (
             <>
-              <PriceCell
-                price={livePrice.ltp}
-                className="text-2xl font-bold"
-              />
-              <div
+              <PriceCell price={livePrice.ltp} className="!px-0 text-kpi font-semibold" />
+              <span
                 className={cn(
-                  "mt-1 font-mono text-sm",
-                  change >= 0 ? "text-bullish" : "text-bearish"
+                  "font-mono text-panel font-semibold tabular-nums",
+                  up ? "text-bullish" : "text-bearish"
                 )}
               >
-                {change >= 0 ? "+" : ""}
+                {up ? "+" : ""}
                 {formatPrice(change)}
-              </div>
+                <span className="ml-2">({formatPercent(changePct)})</span>
+              </span>
             </>
           ) : (
-            <span className="font-mono text-2xl font-bold text-text-muted">—</span>
+            <span className="text-data text-text-muted">No live price — market closed</span>
           )}
         </div>
       </div>
 
-      {livePrice && (
-        <div className="mt-4 grid grid-cols-2 gap-3 border-t border-border pt-4 sm:grid-cols-4 sm:gap-4">
-          {[
-            { label: "Open", value: formatPrice(livePrice.open) },
-            { label: "High", value: formatPrice(livePrice.high) },
-            { label: "Low", value: formatPrice(livePrice.low) },
-            { label: "Volume", value: formatVolume(livePrice.volume) },
-          ].map((item) => (
-            <div key={item.label}>
-              <div className="text-[10px] uppercase tracking-wider text-text-muted">
-                {item.label}
-              </div>
-              <div className="mt-0.5 font-mono text-sm text-text-primary">
-                {item.value}
-              </div>
+      {stats.length > 0 && (
+        <dl className="grid grid-cols-2 border-t border-border sm:grid-cols-4">
+          {stats.map((item, i) => (
+            <div
+              key={item.label}
+              className={cn("px-4 py-2", i > 0 && "sm:border-l sm:border-border", i % 2 === 1 && "border-l border-border sm:border-l")}
+            >
+              <dt className="text-micro font-semibold uppercase text-text-muted">{item.label}</dt>
+              <dd className="font-mono text-data font-medium tabular-nums text-text-primary">{item.value}</dd>
             </div>
           ))}
-        </div>
+        </dl>
       )}
     </div>
   );

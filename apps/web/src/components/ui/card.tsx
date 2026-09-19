@@ -4,15 +4,14 @@ import { cn } from "@/lib/cn";
 type CardProps = {
   children: ReactNode;
   className?: string;
-  hover?: boolean;
 };
 
-export function Card({ children, className = "", hover = true }: CardProps) {
+/** Flat surface: hairline border, 10px radius, no hover lift (data doesn't float). */
+export function Card({ children, className = "" }: CardProps) {
   return (
     <div
       className={cn(
-        "rounded-panel border border-border bg-card backdrop-blur-md shadow-glass p-4 sm:p-5 transition-all duration-300 ease-out",
-        hover && "hover:-translate-y-0.5 hover:border-accent/20 hover:shadow-glow ambient-glow",
+        "rounded-panel border border-border bg-card p-4 shadow-card",
         className
       )}
     >
@@ -20,4 +19,3 @@ export function Card({ children, className = "", hover = true }: CardProps) {
     </div>
   );
 }
-

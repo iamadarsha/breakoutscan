@@ -12,18 +12,17 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
-  sm: "h-9 px-3 text-xs",
-  md: "h-10 sm:h-11 px-4 sm:px-5 text-sm",
-  lg: "h-12 px-6 text-base",
+  sm: "h-8 px-3 text-label",
+  md: "h-9 px-4 text-data",
+  lg: "h-11 px-6 text-panel",
 };
 
+// Only ONE solid accent button should be visible per screen — it marks the primary action.
 const variantStyles: Record<ButtonVariant, string> = {
-  primary:
-    "bg-gradient-to-br from-[#7C5CFC] to-[#5B3FD4] text-white shadow-accent hover:shadow-lg hover:shadow-accent/30",
+  primary: "bg-accent-solid text-white shadow-accent hover:bg-accent-solid-hover",
   secondary:
-    "border border-accent/40 bg-accent/5 text-accent hover:bg-accent/10 hover:border-accent/60",
-  ghost:
-    "text-text-secondary hover:bg-elevated hover:text-text-primary",
+    "border border-border bg-card text-text-primary hover:border-accent/50 hover:bg-accent/5",
+  ghost: "text-text-secondary hover:bg-elevated hover:text-text-primary",
 };
 
 export function Button({
@@ -43,7 +42,7 @@ export function Button({
     <button
       onClick={handleClick}
       className={cn(
-        "inline-flex items-center justify-center rounded-full font-semibold transition-all duration-200 press-scale disabled:opacity-50 disabled:pointer-events-none",
+        "inline-flex items-center justify-center gap-1.5 rounded-lg font-semibold transition-colors duration-150 press-scale disabled:pointer-events-none disabled:opacity-50",
         sizeStyles[size],
         variantStyles[variant],
         className
@@ -54,4 +53,3 @@ export function Button({
     </button>
   );
 }
-

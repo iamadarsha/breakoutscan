@@ -4,6 +4,7 @@ import type {
   AiSuggestionsResponse,
   Alert,
   AlertCreateRequest,
+  AlertHistoryItem,
   CustomScanRequest,
   FundamentalData,
   FundamentalFilters,
@@ -204,10 +205,46 @@ export function fetchLivePrice(symbol: string): Promise<LivePrice> {
   return publicFetch<LivePrice>(`/api/prices/live/${symbol}`);
 }
 
-export function fetchLivePrices(symbols: string[]): Promise<LivePrice[]> {
-  return publicFetch<LivePrice[]>(
+interface ApiLivePrice {
+  symbol: string;
+  ltp?: number | null;
+  open?: number | null;
+  high?: number | null;
+  low?: number | null;
+  close?: number | null;
+  prev_close?: number | null;
+  change?: number | null;
+  change_pct?: number | null;
+  volume?: number | null;
+  timestamp?: string | null;
+}
+
+/**
+ * The API pads unknown symbols with an all-null placeholder (ltp 0). Drop those
+ * and default any missing field so consumers can rely on plain numbers.
+ */
+export async function fetchLivePrices(symbols: string[]): Promise<LivePrice[]> {
+  const rows = await publicFetch<ApiLivePrice[]>(
     `/api/prices/live?symbols=${symbols.join(",")}`
   );
+  return (Array.isArray(rows) ? rows : [])
+    .filter((r) => r && r.symbol && Number(r.ltp) > 0)
+    .map((r) => {
+      const ltp = Number(r.ltp);
+      return {
+        symbol: r.symbol,
+        ltp,
+        open: r.open ?? ltp,
+        high: r.high ?? ltp,
+        low: r.low ?? ltp,
+        close: r.close ?? ltp,
+        prev_close: r.prev_close ?? r.close ?? ltp,
+        change: r.change ?? 0,
+        change_pct: r.change_pct ?? 0,
+        volume: r.volume ?? 0,
+        timestamp: r.timestamp ?? "",
+      };
+    });
 }
 
 export function fetchPriceHistory(
@@ -259,8 +296,16 @@ export function fetchActiveBreakouts(): Promise<ActiveBreakout[]> {
 /*  Watchlist                                                          */
 /* ------------------------------------------------------------------ */
 
-export function fetchWatchlist(): Promise<WatchlistItem[]> {
-  return apiFetch<WatchlistItem[]>("/api/watchlist");
+export async function fetchWatchlist(): Promise<WatchlistItem[]> {
+  // The API names the field company_name; the UI has always read name.
+  const rows = await apiFetch<
+    Array<{ symbol: string; company_name?: string | null; name?: string | null; added_at?: string }>
+  >("/api/watchlist");
+  return (Array.isArray(rows) ? rows : []).map((r) => ({
+    symbol: r.symbol,
+    name: r.company_name || r.name || r.symbol,
+    added_at: r.added_at ?? "",
+  }));
 }
 
 export function addToWatchlist(symbol: string): Promise<WatchlistItem> {
@@ -280,8 +325,9 @@ export function removeFromWatchlist(symbol: string): Promise<void> {
 /*  Alerts                                                             */
 /* ------------------------------------------------------------------ */
 
-export function fetchAlerts(): Promise<Alert[]> {
-  return apiFetch<Alert[]>("/api/alerts");
+export async function fetchAlerts(): Promise<Alert[]> {
+  const rows = await apiFetch<Alert[]>("/api/alerts");
+  return Array.isArray(rows) ? rows : [];
 }
 
 export function createAlert(req: AlertCreateRequest): Promise<Alert> {
@@ -289,6 +335,15 @@ export function createAlert(req: AlertCreateRequest): Promise<Alert> {
     method: "POST",
     body: JSON.stringify(req),
   });
+}
+
+export function deleteAlert(id: string): Promise<void> {
+  return apiFetch<void>(`/api/alerts/${id}`, { method: "DELETE" });
+}
+
+export async function fetchAlertHistory(limit = 50): Promise<AlertHistoryItem[]> {
+  const rows = await apiFetch<AlertHistoryItem[]>(`/api/alerts/history?limit=${limit}`);
+  return Array.isArray(rows) ? rows : [];
 }
 
 /* ------------------------------------------------------------------ */
@@ -359,23 +414,24 @@ export interface ApiHealth {
 }
 
 export async function fetchApiHealth(): Promise<ApiHealth> {
-  // Use a short timeout and no retry — this is a probe, not a data call
-  const controller = new AbortController();
-  const t = setTimeout(() => controller.abort(), 5_000);
-  try {
-    // Routed through /api/backend-health, not a plain /health fetch — the
-    // catch-all proxy always prepends /api/ (which the backend's real
-    // /health route doesn't have), and /api/health itself is Next.js's own
-    // unrelated self-check. See app/api/backend-health/route.ts.
-    const res = await fetch("/api/backend-health", { signal: controller.signal });
-    clearTimeout(t);
-    if (!res.ok) throw new Error("health check failed");
-    return res.json() as Promise<ApiHealth>;
-  } catch {
-    clearTimeout(t);
-    // API completely unreachable — return a synthetic degraded status
-    return { status: "degraded", redis: "unavailable", poller: "stopped", universe_size: 0, uptime_seconds: 0 };
+  // A probe, not a data call: short timeout, but one quiet retry so a single slow
+  // response doesn't flash a "degraded" banner at users.
+  // Routed through /api/backend-health (the catch-all proxy always prepends /api/,
+  // and /api/health is Next.js's own self-check). See app/api/backend-health/route.ts.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const controller = new AbortController();
+    const t = setTimeout(() => controller.abort(), 6_000);
+    try {
+      const res = await fetch("/api/backend-health", { signal: controller.signal, cache: "no-store" });
+      clearTimeout(t);
+      if (res.ok) return (await res.json()) as ApiHealth;
+    } catch {
+      clearTimeout(t);
+    }
+    if (attempt === 0) await new Promise((r) => setTimeout(r, 1_500));
   }
+  // Two failed probes in a row: the API really is unreachable.
+  return { status: "degraded", redis: "unavailable", poller: "stopped", universe_size: 0, uptime_seconds: 0 };
 }
 
 /* ------------------------------------------------------------------ */

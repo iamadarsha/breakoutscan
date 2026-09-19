@@ -32,13 +32,14 @@ export function WatchlistTable({ items, onRemove }: WatchlistTableProps) {
             <span className="font-mono font-semibold text-text-primary">
               {row.original.symbol}
             </span>
-            <div className="text-xs text-text-muted">{row.original.name}</div>
+            <div className="text-label text-text-muted">{row.original.name}</div>
           </div>
         ),
       },
       {
         accessorKey: "ltp",
         header: "LTP",
+        meta: { numeric: true },
         accessorFn: (row) => row.livePrice?.ltp ?? 0,
         cell: ({ row }) => {
           const lp = row.original.livePrice;
@@ -49,9 +50,11 @@ export function WatchlistTable({ items, onRemove }: WatchlistTableProps) {
       {
         accessorKey: "change_pct",
         header: "Change",
+        meta: { numeric: true },
         accessorFn: (row) => row.livePrice?.change_pct ?? 0,
         cell: ({ row }) => {
-          const pct = row.original.livePrice?.change_pct ?? 0;
+          if (!row.original.livePrice) return <span className="text-text-muted">--</span>;
+          const pct = row.original.livePrice.change_pct ?? 0;
           return (
             <Badge variant={pct >= 0 ? "bullish" : "bearish"}>
               {formatPercent(pct)}
@@ -62,10 +65,11 @@ export function WatchlistTable({ items, onRemove }: WatchlistTableProps) {
       {
         accessorKey: "volume",
         header: "Volume",
+        meta: { numeric: true },
         accessorFn: (row) => row.livePrice?.volume ?? 0,
         cell: ({ row }) => (
           <span className="font-mono text-text-secondary">
-            {row.original.livePrice
+            {row.original.livePrice?.volume != null
               ? formatVolume(row.original.livePrice.volume)
               : "--"}
           </span>
@@ -74,20 +78,22 @@ export function WatchlistTable({ items, onRemove }: WatchlistTableProps) {
       {
         accessorKey: "high",
         header: "High",
+        meta: { numeric: true },
         accessorFn: (row) => row.livePrice?.high ?? 0,
         cell: ({ row }) => (
           <span className="font-mono text-text-secondary">
-            {row.original.livePrice?.high.toFixed(2) ?? "--"}
+            {row.original.livePrice?.high?.toFixed(2) ?? "--"}
           </span>
         ),
       },
       {
         accessorKey: "low",
         header: "Low",
+        meta: { numeric: true },
         accessorFn: (row) => row.livePrice?.low ?? 0,
         cell: ({ row }) => (
           <span className="font-mono text-text-secondary">
-            {row.original.livePrice?.low.toFixed(2) ?? "--"}
+            {row.original.livePrice?.low?.toFixed(2) ?? "--"}
           </span>
         ),
       },
@@ -100,7 +106,9 @@ export function WatchlistTable({ items, onRemove }: WatchlistTableProps) {
               e.stopPropagation();
               onRemove(row.original.symbol);
             }}
-            className="rounded-full p-1.5 text-text-muted transition hover:bg-elevated hover:text-bearish"
+            aria-label={`Remove ${row.original.symbol} from watchlist`}
+            title="Remove"
+            className="rounded-lg p-2.5 lg:p-2 text-text-muted transition-colors hover:bg-bearish/10 hover:text-bearish"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>

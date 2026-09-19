@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
+import { PanelHeader } from "@/components/ui/panel-header";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import type { ActiveBreakout } from "@/lib/api-types";
@@ -50,7 +50,7 @@ function FlashPrice({ price }: { price: number }) {
   return (
     <span
       className={cn(
-        "inline-block rounded px-1 font-mono text-sm tabular-nums text-text-primary",
+        "inline-block rounded px-1 font-mono text-panel font-semibold tabular-nums text-text-primary",
         flash
       )}
     >
@@ -63,85 +63,128 @@ interface BreakoutFeedProps {
   items: ActiveBreakout[];
 }
 
+interface BreakoutGroup {
+  symbol: string;
+  company_name?: string | null;
+  last_price?: number | null;
+  is_live: boolean;
+  triggered_at?: string | null;
+  signals: ActiveBreakout[];
+}
+
+/** One row per stock, with every trigger that fired shown as a chip. */
+function groupBySymbol(items: ActiveBreakout[]): BreakoutGroup[] {
+  const groups = new Map<string, BreakoutGroup>();
+  for (const item of items) {
+    const g = groups.get(item.symbol);
+    if (g) {
+      g.signals.push(item);
+      g.is_live = g.is_live || item.is_live !== false;
+    } else {
+      groups.set(item.symbol, {
+        symbol: item.symbol,
+        company_name: item.company_name,
+        last_price: item.last_price,
+        is_live: item.is_live !== false,
+        triggered_at: item.triggered_at,
+        signals: [item],
+      });
+    }
+  }
+  return [...groups.values()];
+}
+
 export function BreakoutFeed({ items }: BreakoutFeedProps) {
-  const [visibleItems, setVisibleItems] = useState<ActiveBreakout[]>([]);
+  const [visibleGroups, setVisibleGroups] = useState<BreakoutGroup[]>([]);
   const anyStale = items.some((i) => i.is_live === false);
+  const totalStocks = new Set(items.map((i) => i.symbol)).size;
 
   useEffect(() => {
-    setVisibleItems(items.slice(0, 20));
+    setVisibleGroups(groupBySymbol(items).slice(0, 20));
   }, [items]);
 
   return (
-    <div className="glass-card rounded-panel overflow-hidden">
-      <div className="flex items-center gap-2 border-b border-border px-3 py-3 sm:px-5">
-        <Zap className="h-4 w-4 text-warning" />
-        <h3 className="text-sm font-semibold text-text-primary">Live Breakout Feed</h3>
-        <Badge variant="accent" className="ml-auto">
-          {items.length} signals
-        </Badge>
-      </div>
+    <div className="glass-card overflow-hidden">
+      <PanelHeader
+        title="Breakout feed"
+        meta={anyStale ? "last session" : "live"}
+        action={
+          <Badge variant="neutral">
+            {totalStocks} stocks · {items.length} signals
+          </Badge>
+        }
+      />
 
       {anyStale && (
-        <div className="border-b border-border bg-elevated/60 px-3 py-1.5 text-[11px] text-text-secondary sm:px-5">
+        <div className="border-b border-border bg-warning/10 px-4 py-1.5 text-label text-warning">
           Market closed — showing the last confirmed breakouts from the most recent session
         </div>
       )}
 
       <div className="max-h-[420px] overflow-y-auto">
         <AnimatePresence initial={false}>
-          {visibleItems.map((item, idx) => (
-            <motion.div
-              key={`${item.symbol}-${item.trigger_type}-${idx}`}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 16 }}
-              transition={{ delay: idx * 0.05, duration: 0.25, ease: "easeOut" }}
-            >
-              <Link
-                href={`/chart/${item.symbol}`}
-                className={cn(
-                  "flex items-center gap-2 px-3 py-3 transition hover:bg-elevated sm:gap-4 sm:px-5",
-                  idx % 2 === 0 ? "bg-transparent" : "bg-sidebar/30"
-                )}
+          {visibleGroups.map((group, idx) => {
+            const bullish = group.signals.filter((s) => s.direction === "bullish").length;
+            const direction = bullish >= group.signals.length / 2 ? "bullish" : "bearish";
+            return (
+              <motion.div
+                key={group.symbol}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 16 }}
+                transition={{ delay: Math.min(idx, 10) * 0.04, duration: 0.25, ease: "easeOut" }}
               >
-                {/* Symbol & name */}
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-sm font-semibold text-text-primary">
-                      {item.symbol}
-                    </span>
-                    {item.company_name && (
-                      <span className="text-xs text-[#8B8D9A]">{item.company_name}</span>
-                    )}
-                  </div>
-                  <div className="mt-0.5 text-[11px] text-text-muted">
-                    {item.is_live === false ? "last session" : timeAgo(item.triggered_at ?? undefined)}
-                  </div>
-                </div>
-
-                {/* Price */}
-                <div className="text-right">
-                  {item.last_price != null && (
-                    <FlashPrice price={item.last_price} />
+                <Link
+                  href={`/chart/${group.symbol}`}
+                  className={cn(
+                    "flex items-center gap-3 border-b border-border-subtle px-4 py-2.5 transition-colors last:border-0 hover:bg-accent/[0.04] sm:gap-4"
                   )}
-                  <div
-                    className={cn(
-                      "font-mono text-xs",
-                      item.direction === "bullish" ? "text-[#00C896]" : "text-[#FF4757]"
-                    )}
-                  >
-                    {item.direction}
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-baseline gap-x-2">
+                      <span className="font-mono text-data font-semibold text-text-primary">
+                        {group.symbol}
+                      </span>
+                      {group.company_name && (
+                        <span className="truncate text-label text-text-secondary">
+                          {group.company_name}
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                      {group.signals.map((sig) => (
+                        <span
+                          key={sig.trigger_type}
+                          className="rounded bg-elevated px-1.5 py-px text-micro font-semibold uppercase tracking-wide text-text-secondary"
+                        >
+                          {TRIGGER_LABELS[sig.trigger_type] ?? sig.trigger_type}
+                        </span>
+                      ))}
+                      <span className="text-label text-text-muted">
+                        {group.is_live ? timeAgo(group.triggered_at ?? undefined) : "last session"}
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <span className="text-xs text-[#5C5D6E]">
-                  {TRIGGER_LABELS[item.trigger_type] ?? item.trigger_type}
-                </span>
-              </Link>
-            </motion.div>
-          ))}
+
+                  <div className="text-right">
+                    {group.last_price != null && <FlashPrice price={group.last_price} />}
+                    <div
+                      className={cn(
+                        "text-label font-semibold",
+                        direction === "bullish" ? "text-bullish" : "text-bearish"
+                      )}
+                    >
+                      <span className="mr-1 text-[8px]">{direction === "bullish" ? "▲" : "▼"}</span>
+                      {direction === "bullish" ? "Bullish" : "Bearish"}
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            );
+          })}
         </AnimatePresence>
-        {visibleItems.length === 0 && (
-          <div className="px-5 py-12 text-center text-sm text-text-muted">
+        {visibleGroups.length === 0 && (
+          <div className="px-5 py-12 text-center text-data text-text-muted">
             No breakout signals yet
           </div>
         )}

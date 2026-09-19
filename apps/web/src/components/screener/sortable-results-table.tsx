@@ -6,6 +6,7 @@ import { type ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice, formatPercent, formatVolume } from "@/lib/format";
+import { sectorFor } from "@/lib/nse-stocks";
 import type { ScanResultItem } from "@/lib/api-types";
 
 interface SortableResultsTableProps {
@@ -14,6 +15,8 @@ interface SortableResultsTableProps {
 
 export function SortableResultsTable({ items }: SortableResultsTableProps) {
   const router = useRouter();
+
+  const hasSignal = items.some((i) => i.signal_strength);
 
   const columns = useMemo<ColumnDef<ScanResultItem, unknown>[]>(
     () => [
@@ -25,22 +28,26 @@ export function SortableResultsTable({ items }: SortableResultsTableProps) {
             <span className="font-mono font-semibold text-text-primary">
               {row.original.symbol}
             </span>
-            <div className="text-xs text-[#5C5D6E]">{row.original.company_name}</div>
+            {row.original.company_name && row.original.company_name !== row.original.symbol && (
+              <div className="text-label text-text-muted">{row.original.company_name}</div>
+            )}
           </div>
         ),
       },
       {
-        accessorKey: "sector",
+        id: "sector",
         header: "Sector",
-        cell: ({ row }) => (
-          <span className="text-xs text-text-secondary">{row.original.sector}</span>
+        accessorFn: (row) => row.sector || sectorFor(row.symbol),
+        cell: ({ getValue }) => (
+          <span className="text-label text-text-secondary">{(getValue() as string) || "—"}</span>
         ),
       },
       {
         accessorKey: "ltp",
         header: "LTP",
+        meta: { numeric: true },
         cell: ({ row }) => (
-          <span className="font-mono text-white">
+          <span className="font-mono text-text-primary">
             {formatPrice(row.original.ltp ?? 0)}
           </span>
         ),
@@ -48,6 +55,7 @@ export function SortableResultsTable({ items }: SortableResultsTableProps) {
       {
         accessorKey: "change_pct",
         header: "Change %",
+        meta: { numeric: true },
         cell: ({ row }) => (
           <Badge
             variant={
@@ -61,13 +69,14 @@ export function SortableResultsTable({ items }: SortableResultsTableProps) {
       {
         accessorKey: "volume",
         header: "Volume",
+        meta: { numeric: true },
         cell: ({ row }) => (
-          <span className="font-mono text-[#8B8D9A]">
+          <span className="font-mono text-text-secondary">
             {formatVolume(row.original.volume ?? 0)}
           </span>
         ),
       },
-      {
+      ...(hasSignal ? [{
         accessorKey: "signal_strength",
         header: "Signal",
         cell: ({ row }) => {
@@ -81,15 +90,15 @@ export function SortableResultsTable({ items }: SortableResultsTableProps) {
                   style={{ width: `${Math.min(strength * 100, 100)}%` }}
                 />
               </div>
-              <span className="font-mono text-xs text-text-secondary">
+              <span className="font-mono text-label text-text-secondary">
                 {(strength * 100).toFixed(0)}%
               </span>
             </div>
           );
         },
-      },
+      } as ColumnDef<ScanResultItem, unknown>] : []),
     ],
-    []
+    [hasSignal]
   );
 
   return (

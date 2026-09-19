@@ -28,7 +28,7 @@ export function FundamentalsResultsTable({
             <span className="font-mono font-semibold text-text-primary">
               {row.original.symbol}
             </span>
-            <div className="text-xs text-text-muted">{row.original.name}</div>
+            <div className="text-label text-text-muted">{row.original.name}</div>
           </div>
         ),
       },
@@ -36,12 +36,13 @@ export function FundamentalsResultsTable({
         accessorKey: "sector",
         header: "Sector",
         cell: ({ row }) => (
-          <span className="text-xs text-text-secondary">{row.original.sector}</span>
+          <span className="text-label text-text-secondary">{row.original.sector}</span>
         ),
       },
       {
         accessorKey: "market_cap",
         header: "Market Cap",
+        meta: { numeric: true },
         cell: ({ row }) => (
           <span className="font-mono text-text-primary">
             {formatMarketCap(row.original.market_cap)}
@@ -51,6 +52,7 @@ export function FundamentalsResultsTable({
       {
         accessorKey: "pe_ratio",
         header: "P/E",
+        meta: { numeric: true },
         cell: ({ row }) => (
           <span className="font-mono text-text-secondary">
             {row.original.pe_ratio?.toFixed(1) ?? "-"}
@@ -60,6 +62,7 @@ export function FundamentalsResultsTable({
       {
         accessorKey: "pb_ratio",
         header: "P/B",
+        meta: { numeric: true },
         cell: ({ row }) => (
           <span className="font-mono text-text-secondary">
             {row.original.pb_ratio?.toFixed(2) ?? "-"}
@@ -69,6 +72,7 @@ export function FundamentalsResultsTable({
       {
         accessorKey: "roe",
         header: "ROE %",
+        meta: { numeric: true },
         cell: ({ row }) => (
           <span className="font-mono text-text-secondary">
             {row.original.roe?.toFixed(1) ?? "-"}
@@ -78,6 +82,7 @@ export function FundamentalsResultsTable({
       {
         accessorKey: "dividend_yield",
         header: "Div Yield",
+        meta: { numeric: true },
         cell: ({ row }) => (
           <span className="font-mono text-text-secondary">
             {row.original.dividend_yield?.toFixed(2) ?? "-"}%
@@ -87,6 +92,7 @@ export function FundamentalsResultsTable({
       {
         accessorKey: "debt_to_equity",
         header: "D/E",
+        meta: { numeric: true },
         cell: ({ row }) => (
           <span className="font-mono text-text-secondary">
             {row.original.debt_to_equity?.toFixed(2) ?? "-"}
@@ -96,6 +102,7 @@ export function FundamentalsResultsTable({
       {
         accessorKey: "eps",
         header: "EPS",
+        meta: { numeric: true },
         cell: ({ row }) => (
           <span className="font-mono text-text-secondary">
             {row.original.eps?.toFixed(2) ?? "-"}

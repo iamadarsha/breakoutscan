@@ -1,86 +1,71 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { BellPlus, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PanelHeader } from "@/components/ui/panel-header";
 import { fetchStocks } from "@/lib/api";
+import { searchLocalStocks } from "@/lib/nse-stocks";
 import { cn } from "@/lib/cn";
 import { haptic } from "@/lib/haptic";
-import type { AlertCreateRequest } from "@/lib/api-types";
+import type { AlertCreateRequest, AlertFrequency } from "@/lib/api-types";
 
 interface AlertFormProps {
   onSubmit: (req: AlertCreateRequest) => void;
   isLoading?: boolean;
 }
 
-const CONDITIONS = [
-  { value: "price_above", label: "Price Above" },
-  { value: "price_below", label: "Price Below" },
-  { value: "change_pct_above", label: "Change % Above" },
-  { value: "change_pct_below", label: "Change % Below" },
-  { value: "volume_above", label: "Volume Above" },
-  { value: "rsi_above", label: "RSI Above" },
-  { value: "rsi_below", label: "RSI Below" },
-];
-
-const OPERATORS = [
-  { value: "gt", label: "Greater Than" },
-  { value: "lt", label: "Less Than" },
-  { value: "gte", label: "Greater or Equal" },
-  { value: "lte", label: "Less or Equal" },
+const FREQUENCIES: { value: AlertFrequency; label: string; hint: string }[] = [
+  { value: "once", label: "Once", hint: "First confirmed breakout, then stops" },
+  { value: "every_time", label: "Every time", hint: "Every confirmed breakout" },
+  { value: "daily_digest", label: "Daily digest", hint: "First breakout each day" },
 ];
 
 export function AlertForm({ onSubmit, isLoading }: AlertFormProps) {
+  const symbolId = useId();
   const [symbolSearch, setSymbolSearch] = useState("");
   const [selectedSymbol, setSelectedSymbol] = useState("");
-  const [conditionType, setConditionType] = useState("price_above");
-  const [operator, setOperator] = useState("gt");
-  const [conditionValue, setConditionValue] = useState("");
+  const [frequency, setFrequency] = useState<AlertFrequency>("once");
   const [showDropdown, setShowDropdown] = useState(false);
 
   const { data: searchData } = useQuery({
     queryKey: ["alert-stock-search", symbolSearch],
     queryFn: () => fetchStocks({ search: symbolSearch, limit: 8 }),
-    enabled: symbolSearch.length >= 1 && showDropdown,
+    enabled: symbolSearch.length >= 2 && showDropdown,
+    retry: 0,
   });
 
-  const selectClass = cn(
-    "h-10 rounded-lg border border-border bg-page px-3 text-sm text-text-primary outline-none transition",
-    "focus:border-accent hover:border-border"
-  );
+  // Instant local matches first; API results replace them when available.
+  const suggestions =
+    searchData?.stocks && searchData.stocks.length > 0
+      ? searchData.stocks.map((s) => ({ symbol: s.symbol, name: s.name }))
+      : symbolSearch.length >= 1
+        ? searchLocalStocks(symbolSearch, 8).map((s) => ({ symbol: s.symbol, name: s.name }))
+        : [];
 
   const handleSubmit = () => {
-    if (!selectedSymbol || !conditionValue) return;
+    if (!selectedSymbol) return;
     haptic("medium");
-    onSubmit({
-      symbol: selectedSymbol,
-      condition_type: conditionType,
-      condition_value: Number(conditionValue),
-      operator,
-    });
+    onSubmit({ symbol: selectedSymbol, frequency });
     setSelectedSymbol("");
     setSymbolSearch("");
-    setConditionValue("");
   };
 
-  return (
-    <div className="rounded-panel border border-border bg-card p-5">
-      <div className="mb-4 flex items-center gap-2">
-        <BellPlus className="h-4 w-4 text-accent" />
-        <h3 className="text-sm font-semibold text-text-primary">Create Alert</h3>
-      </div>
+  const activeHint = FREQUENCIES.find((f) => f.value === frequency)?.hint;
 
-      <div className="space-y-4">
-        {/* Symbol selector */}
+  return (
+    <div className="glass-card overflow-hidden">
+      <PanelHeader title="New breakout alert" />
+      <div className="space-y-4 p-4">
         <div className="relative">
-          <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-text-secondary">
-            Symbol
+          <label htmlFor={symbolId} className="mb-1 block text-micro font-semibold uppercase text-text-muted">
+            Stock
           </label>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-muted" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-muted" />
             <input
+              id={symbolId}
               type="text"
               value={selectedSymbol || symbolSearch}
               onChange={(e) => {
@@ -89,81 +74,58 @@ export function AlertForm({ onSubmit, isLoading }: AlertFormProps) {
                 setShowDropdown(true);
               }}
               onFocus={() => setShowDropdown(true)}
-              placeholder="Search symbol..."
-              className="h-10 w-full rounded-lg border border-border bg-page pl-9 pr-3 text-sm text-text-primary placeholder-text-muted outline-none focus:border-accent"
+              onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
+              placeholder="Search a symbol, e.g. RELIANCE"
+              autoComplete="off"
+              className="h-9 w-full rounded-lg border border-border bg-card pl-9 pr-3 text-data text-text-primary placeholder-text-muted outline-none transition-colors hover:border-accent/40 focus:border-accent focus:shadow-glow"
             />
           </div>
-          {showDropdown && searchData?.stocks && searchData.stocks.length > 0 && !selectedSymbol && (
-            <div className="absolute z-10 mt-1 w-full rounded-lg border border-border bg-card py-1 shadow-lg">
-              {searchData.stocks.map((s) => (
+          {showDropdown && suggestions.length > 0 && !selectedSymbol && (
+            <div className="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-border bg-card shadow-pop">
+              {suggestions.map((s) => (
                 <button
                   key={s.symbol}
-                  onClick={() => {
+                  type="button"
+                  onMouseDown={() => {
                     setSelectedSymbol(s.symbol);
                     setSymbolSearch("");
                     setShowDropdown(false);
                   }}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-elevated"
+                  className="flex w-full items-baseline gap-2 px-3 py-2 text-left text-data transition-colors hover:bg-accent/5"
                 >
-                  <span className="font-mono font-semibold text-text-primary">
-                    {s.symbol}
-                  </span>
-                  <span className="text-xs text-text-secondary">{s.name}</span>
+                  <span className="font-mono font-semibold text-text-primary">{s.symbol}</span>
+                  <span className="truncate text-label text-text-secondary">{s.name}</span>
                 </button>
               ))}
             </div>
           )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-text-secondary">
-              Condition
-            </label>
-            <select
-              value={conditionType}
-              onChange={(e) => setConditionType(e.target.value)}
-              className={cn(selectClass, "w-full h-11 rounded-xl")}
-            >
-              {CONDITIONS.map((c) => (
-                <option key={c.value} value={c.value}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
+        <fieldset>
+          <legend className="mb-1 text-micro font-semibold uppercase text-text-muted">Notify me</legend>
+          <div className="grid grid-cols-3 gap-1 rounded-lg border border-border bg-elevated p-0.5">
+            {FREQUENCIES.map((f) => (
+              <button
+                key={f.value}
+                type="button"
+                onClick={() => setFrequency(f.value)}
+                aria-pressed={frequency === f.value}
+                className={cn(
+                  "h-8 rounded-md text-label font-semibold transition-colors",
+                  frequency === f.value
+                    ? "bg-card text-text-primary shadow-card"
+                    : "text-text-secondary hover:text-text-primary"
+                )}
+              >
+                {f.label}
+              </button>
+            ))}
           </div>
-          <div>
-            <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-text-secondary">
-              Operator
-            </label>
-            <select
-              value={operator}
-              onChange={(e) => setOperator(e.target.value)}
-              className={cn(selectClass, "w-full h-11 rounded-xl")}
-            >
-              {OPERATORS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+          <p className="mt-1.5 text-label text-text-muted">{activeHint}</p>
+        </fieldset>
 
-        <Input
-          label="Value"
-          type="number"
-          value={conditionValue}
-          onChange={(e) => setConditionValue(e.target.value)}
-          placeholder="Enter threshold value"
-        />
-
-        <Button
-          onClick={handleSubmit}
-          disabled={!selectedSymbol || !conditionValue || isLoading}
-          className="w-full"
-        >
-          {isLoading ? "Creating..." : "Create Alert"}
+        <Button onClick={handleSubmit} disabled={!selectedSymbol || isLoading} className="w-full">
+          {isLoading ? "Creating…" : "Create alert"}
         </Button>
       </div>
     </div>

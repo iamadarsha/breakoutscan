@@ -71,7 +71,7 @@ export default function WatchlistPage() {
     return (
       <AppShell>
         <PageTransition>
-          <div className="space-y-6">
+          <div className="space-y-5">
             <SectionHeading
               title="Watchlist"
               subtitle="Track your favourite stocks with live prices"
@@ -88,7 +88,7 @@ export default function WatchlistPage() {
     return (
       <AppShell>
         <PageTransition>
-          <div className="space-y-6">
+          <div className="space-y-5">
             <SectionHeading
               title="Watchlist"
               subtitle="Track your favourite stocks with live prices"
@@ -98,12 +98,12 @@ export default function WatchlistPage() {
               <h3 className="mt-4 text-lg font-semibold text-text-primary">
                 Sign in to use Watchlist
               </h3>
-              <p className="mt-2 text-sm text-text-secondary max-w-sm mx-auto">
+              <p className="mt-2 text-data text-text-secondary max-w-sm mx-auto">
                 Create a personal watchlist to track your favourite stocks with live prices, alerts, and more.
               </p>
               <button
                 onClick={() => router.push("/login")}
-                className="mt-6 inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-6 py-3 text-sm font-semibold text-accent transition hover:bg-accent/20"
+                className="mt-6 inline-flex h-9 items-center gap-2 rounded-lg bg-accent-solid px-4 text-data font-semibold text-white transition-colors hover:bg-accent-solid-hover"
               >
                 <LogIn className="h-4 w-4" />
                 Sign In with Google
@@ -119,7 +119,7 @@ export default function WatchlistPage() {
     <AppShell>
       <PageTransition>
         <motion.div
-          className="space-y-6"
+          className="space-y-5"
           initial="hidden"
           animate="visible"
           variants={{
@@ -167,11 +167,22 @@ export default function WatchlistPage() {
               <SkeletonTable rows={5} />
             ) : isError ? (
               <div className="rounded-panel border border-border bg-card p-8 text-center">
-                <p className="text-sm text-text-muted">Unable to load watchlist. API may be offline.</p>
-                <p className="mt-1 text-xs text-text-muted">Add stocks to get started once the server is available.</p>
+                <p className="text-data text-text-muted">Couldn’t load your watchlist. Check your connection and reload.</p>
+                
+              </div>
+            ) : enrichedItems.length === 0 ? (
+              <div className="rounded-panel border border-dashed border-border bg-card px-6 py-12 text-center">
+                <Eye className="mx-auto h-8 w-8 text-text-muted" />
+                <h3 className="mt-3 text-panel font-semibold text-text-primary">Your watchlist is empty</h3>
+                <p className="mx-auto mt-1 max-w-sm text-data text-text-secondary">
+                  Add the stocks you follow to see live prices, day range and volume in one place.
+                </p>
+                <Button onClick={() => setModalOpen(true)} className="mt-4">
+                  <Plus className="h-4 w-4" /> Add your first stock
+                </Button>
               </div>
             ) : (
-              <div className="rounded-panel border border-border bg-card">
+              <div className="rounded-panel border border-border bg-card shadow-card">
                 <WatchlistTable
                   items={enrichedItems}
                   onRemove={(symbol) => removeMutation.mutate(symbol)}

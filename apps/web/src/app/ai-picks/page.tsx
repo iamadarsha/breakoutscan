@@ -104,7 +104,7 @@ export default function AiPicksPage() {
   return (
     <AppShell>
       <PageTransition>
-        <div className="space-y-6">
+        <div className="space-y-5">
           {/* Header */}
           <div className="flex items-start justify-between">
             <SectionHeading
@@ -120,7 +120,7 @@ export default function AiPicksPage() {
               }
               disabled={refresh.isPending}
               className={cn(
-                "flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-text-secondary transition hover:border-accent/30 hover:text-text-primary",
+                "flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-data font-medium text-text-secondary transition hover:border-accent/30 hover:text-text-primary",
                 refresh.isPending && "cursor-not-allowed opacity-50"
               )}
             >
@@ -131,7 +131,7 @@ export default function AiPicksPage() {
 
           {/* Meta info */}
           {generatedAt && (
-            <div className="flex flex-wrap items-center gap-4 text-xs text-text-muted">
+            <div className="flex flex-wrap items-center gap-4 text-label text-text-muted">
               {poweredBy && (
                 <span className="flex items-center gap-1">
                   <Sparkles className="h-3 w-3" /> Powered by {poweredBy}
@@ -155,7 +155,7 @@ export default function AiPicksPage() {
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
                   className={cn(
-                    "relative flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors",
+                    "relative flex items-center gap-2 px-4 py-2.5 text-data font-medium transition-colors",
                     activeTab === tab.key
                       ? "text-text-primary"
                       : "text-text-muted hover:text-text-secondary"
@@ -165,7 +165,7 @@ export default function AiPicksPage() {
                   {count > 0 && (
                     <span
                       className={cn(
-                        "rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
+                        "rounded-full px-1.5 py-0.5 text-micro font-semibold tabular-nums",
                         activeTab === tab.key
                           ? "bg-accent/20 text-accent"
                           : "bg-elevated text-text-muted"
@@ -184,7 +184,7 @@ export default function AiPicksPage() {
 
           {/* Cards grid */}
           {isLoading ? (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {[1, 2, 3, 4, 5].map((i) => (
                 <SkeletonCard key={i} />
               ))}
@@ -192,16 +192,17 @@ export default function AiPicksPage() {
           ) : activePicks.length === 0 ? (
             <div className="rounded-panel border border-border bg-card p-10 text-center">
               <Sparkles className="mx-auto h-8 w-8 text-text-muted" />
-              <p className="mt-3 text-sm text-text-secondary">
+              <p className="mt-3 text-data text-text-secondary">
                 No AI suggestions available for this timeframe. Click Refresh to
                 generate picks based on the latest market news.
               </p>
             </div>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {activePicks.map((s, i) => (
                 <motion.div
                   key={s.symbol}
+                  className="h-full"
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: i * 0.05 }}
@@ -214,7 +215,7 @@ export default function AiPicksPage() {
 
           {/* Disclaimer */}
           <div className="rounded-panel border border-border bg-card/60 px-5 py-4">
-            <p className="text-[11px] leading-relaxed text-text-muted">
+            <p className="text-label leading-relaxed text-text-muted">
               Disclaimer: AI-generated suggestions are for informational
               purposes only and do not constitute financial advice. Always do
               your own research before making investment decisions. Past

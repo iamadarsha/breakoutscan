@@ -17,7 +17,7 @@ import { PullToRefreshIndicator } from "@/components/ui/pull-to-refresh-indicato
 import { useMarketBreadth, useMarketSectors } from "@/hooks/use-market-breadth";
 import { useActiveBreakouts } from "@/hooks/use-active-breakouts";
 import { useAuth } from "@/hooks/use-auth";
-import { fetchAlerts } from "@/lib/api";
+import { fetchAlertHistory } from "@/lib/api";
 import { usePrebuiltScans, useRunPrebuiltScan } from "@/hooks/use-scan-run";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import type { ScanResultItem } from "@/lib/api-types";
@@ -29,11 +29,12 @@ export default function DashboardPage() {
   const { data: scans, isLoading: scansLoading } = usePrebuiltScans();
   const { data: activeBreakouts = [] } = useActiveBreakouts();
   const { user } = useAuth();
-  const { data: alerts = [] } = useQuery({
-    queryKey: ["alerts"],
-    queryFn: fetchAlerts,
+  const { data: alertHistory = [] } = useQuery({
+    queryKey: ["alert-history"],
+    queryFn: () => fetchAlertHistory(),
     enabled: !!user,
     staleTime: 30_000,
+    retry: 0,
   });
   const runScan = useRunPrebuiltScan();
 
@@ -107,7 +108,7 @@ export default function DashboardPage() {
 
   // Triggered Alerts is the signed-in user's own alert history — never a proxy
   // for scan matches (signed-out visitors have none, so it shows 0).
-  const alertCount = alerts.filter((a) => a.triggered_at).length;
+  const alertCount = alertHistory.length;
 
   return (
     <AppShell>
@@ -115,7 +116,7 @@ export default function DashboardPage() {
         <div ref={containerRef}>
         <PullToRefreshIndicator pullDistance={pullDistance} refreshing={refreshing} />
         <motion.div
-          className="space-y-6"
+          className="space-y-5"
           initial="hidden"
           animate="visible"
           variants={{
@@ -160,20 +161,20 @@ export default function DashboardPage() {
 
           {/* Main Grid */}
           <motion.div
-            className="grid gap-6 xl:grid-cols-3 min-w-0"
+            className="grid gap-5 xl:grid-cols-3 min-w-0"
             variants={{
               hidden: { opacity: 0, y: 16 },
               visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } },
             }}
           >
             {/* Left: Breakout Feed */}
-            <div className="xl:col-span-2 space-y-6 min-w-0">
+            <div className="xl:col-span-2 space-y-5 min-w-0">
               <BreakoutFeed items={activeBreakouts} />
               <VolumeSurges items={volumeItems} />
             </div>
 
             {/* Right: Breadth + Scan Toggles */}
-            <div className="space-y-6">
+            <div className="space-y-5">
               <BreadthDonut breadth={breadth} />
               {scansLoading ? (
                 <SkeletonCard />

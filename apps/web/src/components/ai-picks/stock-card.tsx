@@ -31,7 +31,7 @@ export function StockCard({ suggestion, index, changePct }: StockCardProps) {
   const confidenceLabel =
     confidenceOutOf10 >= 8 ? "High" : confidenceOutOf10 >= 5 ? "Medium" : "Low";
   const confidenceColor =
-    confidenceOutOf10 >= 8 ? "bg-bullish" : confidenceOutOf10 >= 5 ? "bg-accent" : "bg-warning";
+    confidenceOutOf10 >= 8 ? "bg-bullish" : confidenceOutOf10 >= 5 ? "bg-warning" : "bg-text-muted";
 
   const isSell = suggestion.action === "SELL";
   const hasChange = changePct != null;
@@ -43,33 +43,33 @@ export function StockCard({ suggestion, index, changePct }: StockCardProps) {
   const tags = suggestion.tags ?? [];
 
   return (
-    <div className="group rounded-panel border border-border bg-card p-4 transition hover:border-accent/30 hover:shadow-lg">
+    <div className="group h-full rounded-panel border border-border bg-card p-4 transition-colors hover:border-accent/40">
       {/* Header */}
       <Link href={`/chart/${suggestion.symbol}`} className="block">
         <div className="flex items-start justify-between mb-3">
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-mono text-base font-bold text-text-primary group-hover:text-accent transition">
+              <span className="font-mono text-panel font-semibold text-text-primary group-hover:text-accent transition">
                 {suggestion.symbol}
               </span>
-              <Badge variant="accent" className="text-[10px]">
+              <Badge variant="neutral" className="text-micro">
                 #{index + 1}
               </Badge>
               {suggestion.action && (
-                <Badge variant={isSell ? "bearish" : "bullish"} className="text-[10px]">
+                <Badge variant={isSell ? "bearish" : "bullish"} className="text-micro">
                   {suggestion.action}
                 </Badge>
               )}
             </div>
             {suggestion.name && (
-              <p className="mt-0.5 text-xs text-text-muted truncate max-w-[200px]">
+              <p className="mt-0.5 text-label text-text-muted truncate max-w-[200px]">
                 {suggestion.name}
               </p>
             )}
           </div>
 
           <div className="text-right">
-            <div className={cn("text-sm font-bold tabular-nums", changeColor)}>
+            <div className={cn("text-data font-bold tabular-nums", changeColor)}>
               {hasChange
                 ? `${changePct >= 0 ? "+" : ""}${changePct.toFixed(1)}%`
                 : "—"}
@@ -81,10 +81,10 @@ export function StockCard({ suggestion, index, changePct }: StockCardProps) {
       {/* Confidence bar */}
       <div className="mb-3">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-[10px] font-medium text-text-muted">
+          <span className="text-micro font-medium text-text-muted">
             Confidence
           </span>
-          <span className="text-[10px] font-semibold text-text-secondary">
+          <span className="text-micro font-semibold text-text-secondary">
             {confidenceLabel} · {confidenceOutOf10}/10
           </span>
         </div>
@@ -100,14 +100,14 @@ export function StockCard({ suggestion, index, changePct }: StockCardProps) {
       {suggestion.catalyst && (
         <div className="mb-3 flex gap-1.5 rounded-md bg-elevated/60 px-2.5 py-2">
           <Zap className="h-3 w-3 flex-shrink-0 mt-0.5 text-accent" />
-          <p className="text-[11px] leading-snug text-text-secondary line-clamp-2">
+          <p className="text-label leading-snug text-text-secondary line-clamp-2">
             {suggestion.catalyst}
           </p>
         </div>
       )}
 
       {/* Targets */}
-      <div className="flex items-center gap-3 text-[10px] text-text-muted mb-3">
+      <div className="flex items-center gap-3 text-micro text-text-muted mb-3">
         {suggestion.target_pct != null && (
           <span className="flex items-center gap-1">
             {isSell ? <TrendingDown className="h-3 w-3" /> : <Target className="h-3 w-3" />}
@@ -126,7 +126,7 @@ export function StockCard({ suggestion, index, changePct }: StockCardProps) {
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="flex w-full items-center justify-between rounded-md border border-border/60 px-2.5 py-1.5 text-[11px] font-medium text-text-secondary transition hover:border-accent/30 hover:text-text-primary"
+        className="flex w-full items-center justify-between rounded-lg border border-border px-3 py-2.5 text-label font-medium text-text-secondary transition hover:border-accent/30 hover:text-text-primary"
       >
         <span>Why this pick</span>
         <ChevronDown
@@ -136,7 +136,7 @@ export function StockCard({ suggestion, index, changePct }: StockCardProps) {
 
       {expanded && (
         <div className="mt-2.5 space-y-2.5 border-t border-border/60 pt-2.5">
-          <p className="text-[11px] leading-relaxed text-text-secondary">
+          <p className="text-label leading-relaxed text-text-secondary">
             {suggestion.rationale}
           </p>
 
@@ -161,7 +161,7 @@ export function StockCard({ suggestion, index, changePct }: StockCardProps) {
               </div>
               <ul className="space-y-1">
                 {sources.slice(0, 3).map((src, i) => (
-                  <li key={i} className="text-[10px] leading-snug">
+                  <li key={i} className="text-micro leading-snug">
                     {src.url ? (
                       <a
                         href={src.url}

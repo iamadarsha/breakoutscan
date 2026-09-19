@@ -172,23 +172,34 @@ export interface WatchlistItem {
   added_at: string;
 }
 
+/** A breakout alert: notify me when this symbol confirms a breakout. */
 export interface Alert {
   id: string;
   user_id: string;
   symbol: string;
-  condition_type: string;
-  condition_value: number;
-  operator: string;
+  scan_id?: string | null;
+  frequency: AlertFrequency | string;
   is_active: boolean;
-  triggered_at?: string;
-  created_at: string;
+  notify_email?: boolean;
+  notify_push?: boolean;
+  notify_telegram?: boolean;
 }
+
+export type AlertFrequency = "once" | "every_time" | "daily_digest";
 
 export interface AlertCreateRequest {
   symbol: string;
-  condition_type: string;
-  condition_value: number;
-  operator: string;
+  frequency: AlertFrequency;
+}
+
+/** One time an alert actually fired. */
+export interface AlertHistoryItem {
+  id: string;
+  alert_id: string;
+  symbol: string;
+  trigger_price: number;
+  conditions_met: Array<Record<string, unknown>>;
+  triggered_at: string;
 }
 
 export interface FundamentalData {

@@ -1,8 +1,5 @@
 "use client";
 
-import { TrendingUp, Bell, BarChart3, Eye } from "lucide-react";
-import { motion } from "framer-motion";
-import { Card } from "@/components/ui/card";
 import { AnimatedNumber } from "@/components/ui/animated-number";
 import { cn } from "@/lib/cn";
 import type { MarketBreadth } from "@/lib/api-types";
@@ -14,121 +11,68 @@ interface StatCardsProps {
   breadth?: MarketBreadth;
 }
 
+/**
+ * Headline numbers as ONE segmented strip (level 1 of the dashboard hierarchy).
+ * Numbers are neutral ink; colour is reserved for breadth, the only KPI with a
+ * direction. Hairline dividers replace four separate boxes.
+ */
 export function StatCards({
   breakoutCount = 0,
   alertCount = 0,
   volumeSurgeCount = 0,
   breadth,
 }: StatCardsProps) {
-  const breadthPct = breadth
-    ? Math.round((breadth.advances / Math.max(breadth.total, 1)) * 100)
-    : 0;
+  const total = Math.max(breadth?.total ?? 0, 1);
+  const breadthPct = breadth ? Math.round((breadth.advances / total) * 100) : 0;
+  const declinePct = breadth ? Math.round((breadth.declines / total) * 100) : 0;
 
-  const cards = [
-    {
-      label: "Active Breakouts",
-      value: breakoutCount,
-      icon: TrendingUp,
-      color: "text-bullish",
-      borderGrad: "from-bullish to-bullish/0",
-      bgGlow: "from-bullish/[0.06]",
-    },
-    {
-      label: "Triggered Alerts",
-      value: alertCount,
-      icon: Bell,
-      color: "text-accent",
-      borderGrad: "from-accent to-accent/0",
-      bgGlow: "from-accent/[0.06]",
-    },
-    {
-      label: "Volume Surges",
-      value: volumeSurgeCount,
-      icon: BarChart3,
-      color: "text-warning",
-      borderGrad: "from-warning to-warning/0",
-      bgGlow: "from-warning/[0.06]",
-    },
-    {
-      label: "Market Breadth",
-      value: breadthPct,
-      icon: Eye,
-      color: breadthPct >= 50 ? "text-bullish" : "text-bearish",
-      borderGrad:
-        breadthPct >= 50
-          ? "from-bullish to-bullish/0"
-          : "from-bearish to-bearish/0",
-      bgGlow:
-        breadthPct >= 50
-          ? "from-bullish/[0.06]"
-          : "from-bearish/[0.06]",
-      suffix: "%",
-    },
+  const cells = [
+    { label: "Active breakouts", value: breakoutCount, hint: "signals from the latest session" },
+    { label: "Triggered alerts", value: alertCount, hint: "your alerts that fired" },
+    { label: "Volume surges", value: volumeSurgeCount, hint: "≥ 2× average volume" },
   ];
 
   return (
-    <motion.div
-      className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4"
-      initial="hidden"
-      animate="visible"
-      variants={{
-        hidden: {},
-        visible: { transition: { staggerChildren: 0.05 } },
-      }}
-    >
-      {cards.map((card) => (
-        <motion.div
-          key={card.label}
-          variants={{
-            hidden: { opacity: 0, y: 16, scale: 0.97 },
-            visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.3, ease: "easeOut" } },
-          }}
-        >
-        <Card
+    <div className="grid grid-cols-2 overflow-hidden rounded-panel border border-border bg-card shadow-card lg:grid-cols-4">
+      {cells.map((cell, i) => (
+        <div
+          key={cell.label}
           className={cn(
-            "group relative overflow-hidden bg-gradient-to-br",
-            card.bgGlow,
-            "to-transparent"
+            "px-4 py-3.5 sm:px-5",
+            i > 0 && "lg:border-l lg:border-border",
+            i % 2 === 1 && "border-l border-border lg:border-l",
+            i >= 2 && "border-t border-border lg:border-t-0"
           )}
         >
-          {/* Top gradient border accent */}
-          <div
+          <div className="text-label font-semibold uppercase text-text-muted">{cell.label}</div>
+          <AnimatedNumber
+            value={cell.value}
+            format={(v) => Math.round(v).toString()}
+            className="mt-1 block font-mono text-kpi font-semibold tabular-nums text-text-primary"
+          />
+          <div className="mt-0.5 text-micro normal-case tracking-normal text-text-muted">{cell.hint}</div>
+        </div>
+      ))}
+
+      <div className="border-t border-border px-4 py-3.5 sm:px-5 lg:border-l lg:border-t-0">
+        <div className="text-label font-semibold uppercase text-text-muted">Market breadth</div>
+        <div className="mt-1 flex items-baseline gap-1">
+          <AnimatedNumber
+            value={breadthPct}
+            format={(v) => Math.round(v).toString()}
             className={cn(
-              "absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r",
-              card.borderGrad
+              "font-mono text-kpi font-semibold tabular-nums",
+              breadthPct >= 50 ? "text-bullish" : "text-bearish"
             )}
           />
-
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="text-[11px] sm:text-xs font-medium uppercase tracking-wider text-text-secondary">
-                {card.label}
-              </div>
-              <div className="mt-2 sm:mt-3 flex items-baseline gap-1">
-                <AnimatedNumber
-                  value={card.value}
-                  format={(v) => Math.round(v).toString()}
-                  className="text-2xl sm:text-3xl font-semibold tabular-nums text-text-primary"
-                />
-                {card.suffix && (
-                  <span className="text-lg font-semibold text-text-secondary">
-                    {card.suffix}
-                  </span>
-                )}
-              </div>
-            </div>
-            <div
-              className={cn(
-                "rounded-xl bg-elevated p-2.5 transition group-hover:scale-110",
-                card.color
-              )}
-            >
-              <card.icon className="h-5 w-5" />
-            </div>
-          </div>
-        </Card>
-        </motion.div>
-      ))}
-    </motion.div>
+          <span className="font-mono text-panel font-semibold text-text-muted">%</span>
+          <span className="ml-1 text-micro normal-case tracking-normal text-text-muted">advancing</span>
+        </div>
+        <div className="mt-1.5 flex h-1 overflow-hidden rounded-full bg-border" aria-hidden>
+          <div className="bg-bullish" style={{ width: `${breadthPct}%` }} />
+          <div className="bg-bearish" style={{ width: `${declinePct}%` }} />
+        </div>
+      </div>
+    </div>
   );
 }
