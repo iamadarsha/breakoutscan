@@ -210,12 +210,12 @@ export default function ChartPage() {
               </h3>
               <div className="grid grid-cols-3 gap-3 sm:gap-4 lg:grid-cols-6">
                 {[
-                  { label: "EMA 20", value: indicators.ema20 },
-                  { label: "EMA 50", value: indicators.ema50 },
-                  { label: "RSI", value: indicators.rsi },
+                  { label: "EMA 9", value: indicators.ema_9 },
+                  { label: "EMA 21", value: indicators.ema_21 },
+                  { label: "RSI (14)", value: indicators.rsi_14 },
                   { label: "MACD", value: indicators.macd },
-                  { label: "ADX", value: indicators.adx },
-                  { label: "ATR", value: indicators.atr },
+                  { label: "ADX (14)", value: indicators.adx_14 },
+                  { label: "ATR (14)", value: indicators.atr_14 },
                 ].map((ind) => (
                   <div key={ind.label}>
                     <div className="text-[10px] uppercase tracking-wider text-text-muted">

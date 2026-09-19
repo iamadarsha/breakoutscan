@@ -274,8 +274,9 @@ export async function fetchFundamentals(
   if (filters.pe_max != null) sp.set("pe_max", String(filters.pe_max));
   if (filters.pb_min != null) sp.set("pb_min", String(filters.pb_min));
   if (filters.pb_max != null) sp.set("pb_max", String(filters.pb_max));
-  if (filters.market_cap_min != null) sp.set("market_cap_min", String(filters.market_cap_min));
-  if (filters.market_cap_max != null) sp.set("market_cap_max", String(filters.market_cap_max));
+  // UI takes market cap in crores; the API/DB stores rupees (1 crore = 1e7).
+  if (filters.market_cap_min != null) sp.set("market_cap_min", String(filters.market_cap_min * 1e7));
+  if (filters.market_cap_max != null) sp.set("market_cap_max", String(filters.market_cap_max * 1e7));
   if (filters.roe_min != null) sp.set("roe_min", String(filters.roe_min));
   if (filters.dividend_yield_min != null) sp.set("div_yield_min", String(filters.dividend_yield_min));
   if (filters.debt_to_equity_max != null) sp.set("debt_equity_max", String(filters.debt_to_equity_max));

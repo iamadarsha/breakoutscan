@@ -283,25 +283,45 @@ async def market_sectors(
     except Exception:
         pass
 
-    # Fallback: build from DB sectors and cached prices
-    query = (
-        select(Stock.sector, func.count(Stock.symbol))
-        .where(Stock.sector.isnot(None), Stock.is_active.is_(True))
-        .group_by(Stock.sector)
-        .order_by(Stock.sector)
-    )
-    rows = (await db.execute(query)).all()
+    # Compute from the sector column and live prices already in Redis.
+    from app.services.sector_stats import compute_sector_performance
 
-    results: list[SectorPerformance] = []
-    for sector_name, count in rows:
-        if not sector_name:
-            continue
-        results.append(
-            SectorPerformance(
-                sector=sector_name,
-                change_pct=0.0,
-                advances=0,
-                declines=0,
+    rows = (
+        await db.execute(
+            select(Stock.symbol, Stock.sector).where(
+                Stock.sector.isnot(None), Stock.is_active.is_(True)
             )
         )
-    return results
+    ).all()
+    sector_by_symbol = {sym: sec for sym, sec in rows if sec}
+
+    change_by_symbol: dict[str, float] = {}
+    try:
+        import json
+
+        from app.services.redis_cache import get_redis
+
+        redis = await get_redis()
+        symbols = list(sector_by_symbol)
+        raws = await redis.mget([f"price:{s}" for s in symbols]) if symbols else []
+        for sym, raw in zip(symbols, raws):
+            if not raw:
+                continue
+            try:
+                change = json.loads(raw).get("change_pct")
+            except (ValueError, AttributeError):
+                continue
+            if change is not None:
+                change_by_symbol[sym] = float(change)
+    except Exception:
+        logger.warning("sector performance: Redis price read failed", exc_info=True)
+
+    computed = compute_sector_performance(sector_by_symbol, change_by_symbol)
+    if computed:
+        try:
+            from app.services.redis_cache import set_json
+
+            await set_json("market:sectors", computed, ttl=60)
+        except Exception:
+            pass
+    return [SectorPerformance(**s) for s in computed]

@@ -39,9 +39,7 @@ async def get_redis() -> aioredis.Redis:
             socket_timeout=5,
             retry_on_timeout=True,
         )
-        _pool = aioredis.Redis(
-            connection_pool=connection_pool, auto_close_connection_pool=True
-        )
+        _pool = aioredis.Redis(connection_pool=connection_pool)
         log.info("redis_connected", url=settings.redis_url)
     return _pool
 
@@ -50,7 +48,7 @@ async def close_redis() -> None:
     """Gracefully close the Redis connection pool."""
     global _pool  # noqa: PLW0603
     if _pool is not None:
-        await _pool.aclose()
+        await _pool.aclose(close_connection_pool=True)
         _pool = None
         log.info("redis_closed")
 

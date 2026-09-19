@@ -54,18 +54,19 @@ export interface PriceHistory {
 
 export interface Indicators {
   symbol: string;
-  ema20: number | null;
-  ema50: number | null;
-  rsi: number | null;
+  ema_9: number | null;
+  ema_21: number | null;
+  sma_20: number | null;
+  sma_50: number | null;
+  sma_200: number | null;
+  rsi_14: number | null;
   macd: number | null;
   macd_signal: number | null;
-  macd_histogram: number | null;
-  bb_upper: number | null;
-  bb_middle: number | null;
-  bb_lower: number | null;
-  atr: number | null;
-  adx: number | null;
-  volume_sma20: number | null;
+  atr_14: number | null;
+  adx_14: number | null;
+  bollinger_upper: number | null;
+  bollinger_mid: number | null;
+  bollinger_lower: number | null;
 }
 
 export interface PrebuiltScan {

@@ -186,6 +186,7 @@ async def lifespan(_app: FastAPI):
 
     watchdog_task = None
     breakout_watchdog_task = None
+    fundamentals_task = None
     try:
         from app.services.redis_cache import get_redis
 
@@ -214,6 +215,13 @@ async def lifespan(_app: FastAPI):
 
         breakout_watchdog_task = asyncio.create_task(_breakout_watchdog(), name="breakout_watchdog")
         logger.info("Breakout engine watchdog started")
+
+        from app.services.fundamentals_refresh import fundamentals_refresh_loop
+
+        fundamentals_task = asyncio.create_task(
+            fundamentals_refresh_loop(), name="fundamentals_refresh"
+        )
+        logger.info("Fundamentals refresh scheduled")
     except asyncio.TimeoutError:
         logger.warning("Redis connection timed out – starting without Redis")
     except Exception as exc:
@@ -275,6 +283,14 @@ async def lifespan(_app: FastAPI):
         except asyncio.CancelledError:
             pass
         logger.info("Breakout engine watchdog stopped")
+
+    if fundamentals_task is not None:
+        fundamentals_task.cancel()
+        try:
+            await fundamentals_task
+        except asyncio.CancelledError:
+            pass
+        logger.info("Fundamentals refresh stopped")
 
     if upstox_provider is not None:
         await upstox_provider.stop()

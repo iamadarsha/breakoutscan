@@ -183,19 +183,19 @@ async def get_price_history(
 
 @router.get("/indicators/{symbol}")
 async def get_indicators(symbol: str):
-    """Get current technical indicators for a symbol from Redis. Returns empty on failure."""
-    try:
-        from app.services.redis_cache import get_json
+    """Current daily technical indicators for a symbol, from the `ind:{symbol}:1d` hash."""
+    from app.services.redis_cache import hget_all
+    from app.utils.redis_keys import indicator_key
 
-        data = await get_json(f"indicators:{symbol.upper()}")
-        if not data:
-            raise HTTPException(
-                status_code=404,
-                detail=f"No indicators for {symbol}",
-            )
-        return {"symbol": symbol.upper(), "indicators": data}
-    except HTTPException:
-        raise
-    except Exception:
-        logger.warning("Redis unavailable for indicators %s — returning empty", symbol)
-        return {"symbol": symbol.upper(), "indicators": {}}
+    sym = symbol.upper()
+    raw = await hget_all(indicator_key(sym, "1d"))
+    if not raw:
+        raise HTTPException(status_code=404, detail=f"No indicators for {sym}")
+
+    out: dict[str, float | str | None] = {"symbol": sym}
+    for field, value in raw.items():
+        try:
+            out[field] = float(value)
+        except (TypeError, ValueError):
+            out[field] = None
+    return out
