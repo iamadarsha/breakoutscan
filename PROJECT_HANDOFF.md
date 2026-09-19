@@ -1,4 +1,4 @@
-# PROJECT HANDOFF: Codex Screener (BreakoutScan)
+# PROJECT HANDOFF: BreakoutScan (BreakoutScan)
 
 > **A real-time Indian NSE/BSE stock screener platform** with a dark terminal-style UI.
 > Monorepo: FastAPI backend + Next.js 15 web frontend + native iOS WebView app.
@@ -9,7 +9,7 @@
 
 | Field | Value |
 |---|---|
-| **Project Name** | Codex Screener (internal codename: BreakoutScan) |
+| **Project Name** | BreakoutScan (internal codename: BreakoutScan) |
 | **Live URL** | https://breakoutscan-web-production.up.railway.app |
 | **Backend URL** | https://breakoutscan-api-production.up.railway.app |
 | **Owner** | Adarsha Chatterjee |
@@ -47,7 +47,7 @@
 
 ## 1. WHAT THIS APP DOES
 
-Codex Screener is a **real-time Indian stock market screener** targeting NSE (National Stock Exchange) stocks. It provides:
+BreakoutScan is a **real-time Indian stock market screener** targeting NSE (National Stock Exchange) stocks. It provides:
 
 - **Dashboard**: Live market overview with stat cards (active breakouts, triggered alerts, volume surges, market breadth), a live breakout feed showing stocks hitting technical triggers, sector heatmap, and volume surge list.
 - **Screener**: 12 prebuilt technical scans (RSI Oversold, RSI Overbought, Bullish/Bearish EMA Crossover, Price Above/Below SMA200, Volume Spike, Bollinger Squeeze, MACD Bullish Cross, Near 52-Week High, ORB Breakout, Bullish Engulfing) + custom scan builder where users define indicator conditions.
@@ -546,7 +546,7 @@ RootLayout (layout.tsx)
       ├── Sidebar (desktop only, collapsible)
       │   └── Navigation links with icons
       ├── Topbar
-      │   ├── Brand name "Codex Screener"
+      │   ├── Brand name "BreakoutScan"
       │   ├── Search input (local-first + API)
       │   ├── Theme toggle (sun/moon)
       │   ├── CLOSED/LIVE market indicator
@@ -638,7 +638,7 @@ The iOS app is a **native SwiftUI wrapper** around the production web app. It do
 
 **`ContentView.swift`**: Contains three components:
 1. **ContentView**: Main view with ZStack of WebView + LaunchOverlay
-2. **LaunchOverlay**: Purple gradient splash screen with "BS" logo text, "Codex Screener" title, animated progress bar. Fades out when WebView finishes loading.
+2. **LaunchOverlay**: Purple gradient splash screen with "BS" logo text, "BreakoutScan" title, animated progress bar. Fades out when WebView finishes loading.
 3. **WebView (UIViewRepresentable)**: WKWebView wrapper with:
    - Navigation delegate (opens external links in Safari)
    - Progress observation via KVO for loading bar
@@ -794,7 +794,7 @@ Server pushes when background scan finds new matches.
 - Framer Motion: Page transitions (`page-transition.tsx`)
 
 ### Mobile Optimizations Applied
-- Topbar: "Codex Screener" brand on mobile (index tickers in separate row below)
+- Topbar: "BreakoutScan" brand on mobile (index tickers in separate row below)
 - Search: `h-8 w-28` on mobile, `h-9 w-48` on desktop
 - Stat cards: Always 2-column grid
 - Scan grid: 2 columns on mobile, 3-4 on larger screens
@@ -1463,7 +1463,7 @@ Based on user requests during development:
 
 ## END OF HANDOFF
 
-This document contains everything needed to continue building Codex Screener from any AI coding assistant (Claude Code, GitHub Copilot, ChatGPT Codex, Google Antigravity, Perplexity Code, Cursor, Windsurf, etc.).
+This document contains everything needed to continue building BreakoutScan from any AI coding assistant (Claude Code, GitHub Copilot, ChatGPT Codex, Google Antigravity, Perplexity Code, Cursor, Windsurf, etc.).
 
 **Last updated**: March 16, 2026 — Version 3.0
 **Last working on**: Mobile UI readability fixes for iOS app (viewport scaling, search dropdown, Add Stock button).

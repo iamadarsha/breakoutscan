@@ -58,7 +58,7 @@ struct LaunchOverlay: View {
                         .foregroundColor(.white)
                 }
 
-                Text("Codex Screener")
+                Text("BreakoutScan")
                     .font(.system(size: 28, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
 

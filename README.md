@@ -8,8 +8,8 @@
 
 *Scan NIFTY 500 in seconds · AI trade briefs · Live options analytics · Production-grade security*
 
-[![Railway](https://img.shields.io/badge/API-Railway%20Pro-8B5CF6?style=flat-square&logo=railway)](https://breakoutscan-api-production.up.railway.app/health)
-[![Vercel](https://img.shields.io/badge/Web-Vercel-000000?style=flat-square&logo=vercel)](https://breakoutscan-web-production.up.railway.app)
+[![Railway](https://img.shields.io/badge/API-Railway%20Pro-8B5CF6?style=flat-square&logo=railway)](https://codex-screener-production.up.railway.app/health)
+[![Vercel](https://img.shields.io/badge/Web-Vercel-000000?style=flat-square&logo=vercel)](https://breakoutscan-web.vercel.app)
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square&logo=python)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.13x-009688?style=flat-square&logo=fastapi)](https://fastapi.tiangolo.com/)
 [![Next.js](https://img.shields.io/badge/Next.js-15-000000?style=flat-square&logo=next.js)](https://nextjs.org/)
@@ -18,7 +18,7 @@
 
 ---
 
-**[Live Demo](https://breakoutscan-web-production.up.railway.app/dashboard)** · **[API Docs](https://breakoutscan-api-production.up.railway.app/docs)** · **[Report Bug](https://github.com/iamadarsha/Codex-Screener/issues)**
+**[Live Demo](https://breakoutscan-web.vercel.app/dashboard)** · **[API Docs](https://codex-screener-production.up.railway.app/docs)** · **[Report Bug](https://github.com/iamadarsha/breakoutscan/issues)**
 
 </div>
 
@@ -320,8 +320,8 @@ Production-grade hardening applied throughout:
 
 ```bash
 # Clone
-git clone https://github.com/iamadarsha/Codex-Screener.git
-cd Codex-Screener
+git clone https://github.com/iamadarsha/breakoutscan.git
+cd breakoutscan
 
 # Copy environment variables
 cp .env.example .env
@@ -359,7 +359,7 @@ npm run dev
 
 ## API Reference
 
-Base URL: `https://breakoutscan-api-production.up.railway.app`
+Base URL: `https://codex-screener-production.up.railway.app`
 
 | Method | Endpoint | Description |
 |---|---|---|
@@ -482,6 +482,6 @@ Built with ❤️ by [Adarsha Chatterjee](https://github.com/iamadarsha)
 
 *Made with love by a fellow trader · Trade With Adarsha · [@iamadarsha](https://instagram.com/iamadarsha)*
 
-**[breakoutscan.in](https://breakoutscan.in)** · **[Live App](https://breakoutscan-web-production.up.railway.app/dashboard)** · **[API](https://breakoutscan-api-production.up.railway.app/docs)**
+**[breakoutscan.in](https://breakoutscan.in)** · **[Live App](https://breakoutscan-web.vercel.app/dashboard)** · **[API](https://codex-screener-production.up.railway.app/docs)**
 
 </div>

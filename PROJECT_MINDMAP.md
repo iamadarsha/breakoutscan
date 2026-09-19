@@ -1,4 +1,4 @@
-# Codex Screener — Interactive Mind Map & Workflow (for Figma)
+# BreakoutScan — Interactive Mind Map & Workflow (for Figma)
 
 > **How to import into Figma**: Copy each Mermaid code block into [Mermaid Chart Figma Plugin](https://www.figma.com/community/plugin/1365764431157) or use the live edit links below to export as SVG/PNG and paste into FigJam.
 
@@ -8,7 +8,7 @@
 
 ```mermaid
 mindmap
-  root((Codex Screener))
+  root((BreakoutScan))
     **Frontend**
       Next.js 15 + React 19
         Dashboard

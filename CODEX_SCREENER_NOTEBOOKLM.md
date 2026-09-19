@@ -1,12 +1,12 @@
-# Codex Screener: Complete Project Knowledge Base
+# BreakoutScan: Complete Project Knowledge Base
 
-> This document is optimized for Google NotebookLM. Upload this file as a source to generate mind maps, infographics, audio overviews, and study guides about the Codex Screener project.
+> This document is optimized for Google NotebookLM. Upload this file as a source to generate mind maps, infographics, audio overviews, and study guides about the BreakoutScan project.
 
 ---
 
 ## Project Identity
 
-- **Project Name**: Codex Screener
+- **Project Name**: BreakoutScan
 - **Internal Codename**: BreakoutScan
 - **What It Does**: Real-time Indian stock market screener with AI-powered stock recommendations
 - **Target Users**: Indian retail traders and investors who want technical analysis for NSE and BSE stocks without paying for expensive platforms
@@ -18,7 +18,7 @@
 
 ## Mind Map: Project Architecture Hierarchy
 
-The project has a clear hierarchy. At the top level is the Codex Screener platform. It branches into three main applications: the Web App, the API Backend, and the iOS App. Each application connects to shared services: a PostgreSQL database on Supabase, a Redis cache on Railway, and external data APIs.
+The project has a clear hierarchy. At the top level is the BreakoutScan platform. It branches into three main applications: the Web App, the API Backend, and the iOS App. Each application connects to shared services: a PostgreSQL database on Supabase, a Redis cache on Railway, and external data APIs.
 
 The Web App branches into 8 pages: Dashboard, AI Picks, Screener, Charts, Watchlist, Alerts, Fundamentals, and Settings. Each page connects to specific API endpoints on the backend.
 
