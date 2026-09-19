@@ -12,6 +12,7 @@ from app.breakouts.state_machine import BreakoutTracker
 from app.breakouts.types import BreakoutStatus
 from app.db.models.breakout_event import BreakoutEvent
 from app.db.models.stock import Stock
+from app.services.stock_names import company_name_for
 from app.schemas.breakout import ActiveBreakoutOut, BreakoutEventOut, SymbolBreakoutsOut
 
 logger = logging.getLogger(__name__)
@@ -22,6 +23,7 @@ router = APIRouter(prefix="/api/breakouts", tags=["breakouts"])
 def _to_active_out(tracker: BreakoutTracker) -> ActiveBreakoutOut:
     return ActiveBreakoutOut(
         symbol=tracker.symbol,
+        company_name=company_name_for(tracker.symbol),
         trigger_type=tracker.trigger_type.value,
         direction=tracker.direction.value,
         status=tracker.status.value,
@@ -41,7 +43,7 @@ def _to_active_out(tracker: BreakoutTracker) -> ActiveBreakoutOut:
 def _db_event_to_active_out(row: BreakoutEvent, company_name: str | None) -> ActiveBreakoutOut:
     return ActiveBreakoutOut(
         symbol=row.symbol,
-        company_name=company_name,
+        company_name=company_name if company_name and company_name != row.symbol else company_name_for(row.symbol),
         trigger_type=row.trigger_type,
         direction=row.direction,
         status="CONFIRMED",

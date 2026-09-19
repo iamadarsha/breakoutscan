@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageTransition } from "@/components/layout/page-transition";
 import { StatCards } from "@/components/dashboard/stat-cards";
@@ -16,6 +16,8 @@ import { SkeletonCard } from "@/components/ui/skeleton";
 import { PullToRefreshIndicator } from "@/components/ui/pull-to-refresh-indicator";
 import { useMarketBreadth, useMarketSectors } from "@/hooks/use-market-breadth";
 import { useActiveBreakouts } from "@/hooks/use-active-breakouts";
+import { useAuth } from "@/hooks/use-auth";
+import { fetchAlerts } from "@/lib/api";
 import { usePrebuiltScans, useRunPrebuiltScan } from "@/hooks/use-scan-run";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import type { ScanResultItem } from "@/lib/api-types";
@@ -26,6 +28,13 @@ export default function DashboardPage() {
   const { data: sectors, isLoading: sectorsLoading } = useMarketSectors();
   const { data: scans, isLoading: scansLoading } = usePrebuiltScans();
   const { data: activeBreakouts = [] } = useActiveBreakouts();
+  const { user } = useAuth();
+  const { data: alerts = [] } = useQuery({
+    queryKey: ["alerts"],
+    queryFn: fetchAlerts,
+    enabled: !!user,
+    staleTime: 30_000,
+  });
   const runScan = useRunPrebuiltScan();
 
   const handleRefresh = useCallback(async () => {
@@ -96,15 +105,9 @@ export default function DashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scans]);
 
-  // alertCount: all breakout items count as signals (signal_strength is
-  // populated only when the backend stores a score — use length as fallback)
-  const alertCount = useMemo(
-    () =>
-      breakoutItems.filter(
-        (i) => (i.signal_strength != null ? i.signal_strength > 0.5 : true)
-      ).length,
-    [breakoutItems]
-  );
+  // Triggered Alerts is the signed-in user's own alert history — never a proxy
+  // for scan matches (signed-out visitors have none, so it shows 0).
+  const alertCount = alerts.filter((a) => a.triggered_at).length;
 
   return (
     <AppShell>

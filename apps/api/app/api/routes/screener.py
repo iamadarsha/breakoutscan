@@ -10,6 +10,7 @@ from fastapi import APIRouter, HTTPException, Request
 from app.core.config import get_settings
 from app.core.rate_limit import limiter
 from app.schemas.common import ErrorResponse
+from app.services.stock_names import company_name_for
 from app.schemas.screener import (
     CustomScanRequest,
     PrebuiltScanOut,
@@ -146,7 +147,7 @@ async def run_prebuilt_scan(request: Request, req: ScanRequest):
             data = r.get("data", {})
             items.append({
                 "symbol": r.get("symbol", ""),
-                "company_name": r.get("symbol", ""),
+                "company_name": company_name_for(r.get("symbol", "")),
                 "ltp": float(data.get("close", 0) or 0),
                 "change_pct": float(data.get("change_pct", 0) or 0),
                 "sector": data.get("sector", ""),
@@ -227,7 +228,7 @@ async def run_custom_scan(request: Request, req: CustomScanRequest):
             data = r.get("data", {})
             items.append({
                 "symbol": r.get("symbol", ""),
-                "company_name": r.get("symbol", ""),
+                "company_name": company_name_for(r.get("symbol", "")),
                 "ltp": float(data.get("close", 0) or 0),
                 "change_pct": float(data.get("change_pct", 0) or 0),
                 "sector": data.get("sector", ""),

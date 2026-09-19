@@ -59,8 +59,12 @@ export function formatVolume(value: number): string {
  * Format market cap
  */
 export function formatMarketCap(value: number): string {
-  if (value >= 1e12) return `${(value / 1e7).toFixed(0)}Cr`;
-  if (value >= 1e7) return `${(value / 1e7).toFixed(2)}Cr`;
+  // Indian units: 1 crore = 1e7, 1 lakh crore = 1e12 (all values are in rupees).
+  if (value >= 1e12) return `₹${(value / 1e12).toFixed(2)}L Cr`;
+  if (value >= 1e7) {
+    const crores = value / 1e7;
+    return `₹${crores.toLocaleString("en-IN", { maximumFractionDigits: crores >= 1000 ? 0 : 2 })} Cr`;
+  }
   if (value >= 1e5) return `${(value / 1e5).toFixed(2)}L`;
   return formatINR(value);
 }
