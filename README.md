@@ -327,7 +327,7 @@ The UI loads with nothing configured, but data depends on what you provide. (For
 - **AI Picks and the per-stock call:** `GEMINI_API_KEY` and `GROQ_API_KEY` (both have free tiers).
 - **Sign-in, watchlist, alerts:** a Firebase (or Supabase) project. The auth settings are in [`docs/FREE_STACK_MIGRATION.md`](docs/FREE_STACK_MIGRATION.md).
 - `.env.example` still lists Supabase variables from an earlier setup; the migration guide above describes the current one.
-- `docker compose up --build` also defines the API and web containers. I couldn't re-test that full-stack path when writing this, so treat the manual route above as the reference.
+- `docker-compose.yml` also defines API and web containers, but that full-stack path isn't maintained: the API container's port settings look out of sync with its healthcheck, so it may not start. Use the manual route above.
 
 **Checks**
 
