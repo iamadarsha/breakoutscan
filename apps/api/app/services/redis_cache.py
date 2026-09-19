@@ -27,13 +27,20 @@ async def get_redis() -> aioredis.Redis:
     global _pool  # noqa: PLW0603
     if _pool is None:
         settings = get_settings()
-        _pool = aioredis.from_url(
+        # BlockingConnectionPool makes callers wait for a free connection
+        # instead of raising "Too many connections" the instant a burst
+        # (bulk indicator compute + scans + engine) exceeds the cap.
+        connection_pool = aioredis.BlockingConnectionPool.from_url(
             settings.redis_url,
             decode_responses=True,
-            max_connections=20,
+            max_connections=50,
+            timeout=10,
             socket_connect_timeout=5,
             socket_timeout=5,
             retry_on_timeout=True,
+        )
+        _pool = aioredis.Redis(
+            connection_pool=connection_pool, auto_close_connection_pool=True
         )
         log.info("redis_connected", url=settings.redis_url)
     return _pool

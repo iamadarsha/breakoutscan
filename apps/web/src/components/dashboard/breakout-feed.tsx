@@ -65,7 +65,7 @@ interface BreakoutFeedProps {
 
 export function BreakoutFeed({ items }: BreakoutFeedProps) {
   const [visibleItems, setVisibleItems] = useState<ActiveBreakout[]>([]);
-  const anyStale = items.some((i) => !i.is_live);
+  const anyStale = items.some((i) => i.is_live === false);
 
   useEffect(() => {
     setVisibleItems(items.slice(0, 20));
@@ -115,7 +115,7 @@ export function BreakoutFeed({ items }: BreakoutFeedProps) {
                     )}
                   </div>
                   <div className="mt-0.5 text-[11px] text-text-muted">
-                    {item.is_live ? timeAgo(item.triggered_at ?? undefined) : "last session"}
+                    {item.is_live === false ? "last session" : timeAgo(item.triggered_at ?? undefined)}
                   </div>
                 </div>
 
