@@ -84,14 +84,14 @@ async def _run_morning_ai_suggestions() -> None:
 
     logger.info("morning_ai_suggestions: starting scheduled generation")
     try:
-        result = await asyncio.wait_for(generate_suggestions(), timeout=120)
+        result = await asyncio.wait_for(generate_suggestions(), timeout=135)
         total = sum(len(result.get(k, [])) for k in ("intraday", "weekly", "monthly"))
         logger.info(
             "morning_ai_suggestions: done source=%s picks=%d",
             result.get("source", "?"), total,
         )
     except asyncio.TimeoutError:
-        logger.error("morning_ai_suggestions: 120s timeout exceeded")
+        logger.error("morning_ai_suggestions: 135s timeout exceeded")
     except Exception as exc:
         logger.error("morning_ai_suggestions_failed: %s", exc, exc_info=True)
 

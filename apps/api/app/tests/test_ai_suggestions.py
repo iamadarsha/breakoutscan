@@ -128,3 +128,30 @@ def test_rsi_score_rewards_overbought_same_as_oversold():
     oversold_score = ai._score_stock("A", {**base, "rsi_14": 20}, 0, "weekly")
     overbought_score = ai._score_stock("B", {**base, "rsi_14": 80}, 0, "weekly")
     assert oversold_score == overbought_score
+
+
+def test_backfill_attaches_only_real_matching_headlines_and_keeps_model_citations(monkeypatch):
+    from app.services import ai_suggestions as svc
+
+    headlines = [
+        {"title": "RELIANCE gains as Jio IPO nears", "url": "http://a", "source": "ET"},
+        {"title": "Nifty ends flat", "url": "http://b", "source": "Mint"},
+        {"title": "reliance retail expands", "url": "http://c", "source": "MC"},
+    ]
+    monkeypatch.setattr(
+        svc, "_extract_headline_symbols", lambda hs: {"RELIANCE": [hs[0], hs[2]]}
+    )
+    picks = {
+        "intraday": [
+            {"symbol": "RELIANCE", "news_sources": []},
+            {"symbol": "TCS"},  # no matching headline: must stay empty, nothing invented
+            {"symbol": "RELIANCE", "news_sources": [{"title": "model-cited"}]},
+        ],
+        "weekly": [],
+        "monthly": [],
+    }
+    svc._backfill_news_sources(picks, headlines)
+
+    assert [h["url"] for h in picks["intraday"][0]["news_sources"]] == ["http://a", "http://c"]
+    assert "news_sources" not in picks["intraday"][1]
+    assert picks["intraday"][2]["news_sources"] == [{"title": "model-cited"}]

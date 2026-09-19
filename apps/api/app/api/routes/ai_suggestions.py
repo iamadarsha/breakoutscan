@@ -14,10 +14,10 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/ai-suggestions", tags=["ai-suggestions"])
 
 # generate_suggestions()'s internal per-layer timeouts sum to a worst case
-# of ~97s (see ai_suggestions.py). This must stay comfortably above that,
+# of ~120s (see ai_suggestions.py). This must stay comfortably above that,
 # or a slow-but-successful AI response gets silently truncated by this
 # outer timeout before the layer itself ever gets a chance to time out.
-AI_SUGGESTIONS_OUTER_TIMEOUT = 110
+AI_SUGGESTIONS_OUTER_TIMEOUT = 135
 
 # Track if a background generation is already running
 _generating = False
@@ -72,7 +72,7 @@ async def get_ai_suggestions(request: Request, background_tasks: BackgroundTasks
 @router.post("/refresh")
 @limiter.limit(get_settings().rate_limit_ai_refresh)
 async def refresh_ai_suggestions(request: Request):
-    """Force regenerate AI stock suggestions (typically 3-10s via Gemini, up to ~100s worst case if every layer falls through)."""
+    """Force regenerate AI stock suggestions (typically 3-10s via Gemini, up to ~120s worst case if every layer falls through)."""
     try:
         from app.services.ai_suggestions import generate_suggestions
 

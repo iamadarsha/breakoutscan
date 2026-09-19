@@ -36,13 +36,16 @@ REDIS_KEY = "ai:suggestions"
 # silently truncating a slow-but-otherwise-successful AI response.
 RSS_FETCH_TIMEOUT = 15
 MARKET_SUMMARY_TIMEOUT = 8
-GEMINI_PER_KEY_TIMEOUT = 15
-GEMINI_LAYER_TIMEOUT = 32  # 2 keys × 15s + overhead margin
+# Measured live: the full news + market-data prompt takes ~20-25s on
+# gemini-3.5-flash-lite; 15s made every call time out and silently fall
+# through to the technical layer.
+GEMINI_PER_KEY_TIMEOUT = 45
+GEMINI_LAYER_TIMEOUT = 55  # one full attempt + margin (a backup key gets whatever is left)
 GROQ_TIMEOUT = 15
 XAI_TIMEOUT = 15
 ALT_AI_LAYER_TIMEOUT = 32  # groq + xai × 15s + overhead margin
 TECHNICAL_LAYER_TIMEOUT = 10
-# Worst case: 15 + 8 + 32 + 32 + 10 = 97s. Callers should wrap with >= 110s.
+# Worst case: 15 + 8 + 55 + 32 + 10 = 120s. Callers should wrap with >= 135s.
 
 RSS_FEEDS = [
     "https://news.google.com/rss/search?q=indian+stock+market+NSE&hl=en-IN&gl=IN&ceid=IN:en",
@@ -470,6 +473,24 @@ def _extract_headline_symbols(headlines: list[dict[str, str]]) -> dict[str, list
     return symbol_headlines
 
 
+def _backfill_news_sources(
+    picks: dict[str, list[dict[str, Any]]], headlines: list[dict[str, str]],
+) -> None:
+    """Attach up to 3 real headlines that mention the stock to any pick whose
+    model cited none, so the 'why this pick' card always shows its evidence.
+    Only headlines that genuinely match the symbol are used; nothing is invented."""
+    if not headlines:
+        return
+    by_symbol = _extract_headline_symbols(headlines)
+    for bucket in ("intraday", "weekly", "monthly"):
+        for pick in picks.get(bucket, []):
+            if pick.get("news_sources"):
+                continue
+            matches = by_symbol.get(str(pick.get("symbol", "")).upper())
+            if matches:
+                pick["news_sources"] = matches[:3]
+
+
 async def _load_stock_data() -> dict[str, dict[str, Any]]:
     """Bulk-load price + indicator data from Redis using pipelines for speed."""
     from app.services.redis_cache import get_redis
@@ -877,6 +898,12 @@ async def generate_suggestions() -> dict[str, Any]:
             log.warning("layer3_global_timeout")
         except Exception as e:
             log.warning("layer3_unexpected: %s %s", type(e).__name__, e)
+
+    if source != "technical-analysis":
+        try:
+            _backfill_news_sources(picks, headlines)
+        except Exception as e:
+            log.warning("news_source_backfill_failed: %s", e)
 
     total_count = sum(len(v) for k, v in picks.items() if k in ("intraday", "weekly", "monthly"))
     log.info("ai_suggestions source=%s total_picks=%d", source, total_count)
