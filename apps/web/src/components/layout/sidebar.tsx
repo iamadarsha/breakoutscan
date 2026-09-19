@@ -21,7 +21,7 @@ import {
 import { cn } from "@/lib/cn";
 import { useMarketStatus } from "@/hooks/use-market-breadth";
 import { useAuth } from "@/hooks/use-auth";
-import { createClient } from "@/lib/supabase/client";
+import { auth } from "@/lib/auth";
 
 const mainNav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -44,8 +44,7 @@ export function Sidebar() {
   const { user, loading: authLoading } = useAuth();
 
   const handleSignOut = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    await auth.signOut();
     router.refresh();
   };
 

@@ -16,6 +16,7 @@ from fastapi import HTTPException
 from app.api.deps import get_current_user
 from app.core import supabase_auth
 
+SUPABASE_USER = "6f9619ff-8b86-d011-b42d-00c04fc964ff"
 PROJECT = "https://abcdefgh.supabase.co"
 ISSUER = f"{PROJECT}/auth/v1"
 
@@ -41,7 +42,7 @@ def _config(monkeypatch, ec_key):
 
 
 def _claims(**over):
-    base = {"sub": "user-123", "aud": "authenticated", "iss": ISSUER, "exp": int(time.time()) + 300}
+    base = {"sub": SUPABASE_USER, "aud": "authenticated", "iss": ISSUER, "exp": int(time.time()) + 300}
     base.update(over)
     return base
 
@@ -55,7 +56,7 @@ async def _user(token):
 
 
 async def test_valid_es256_token_returns_user_id(ec_key):
-    assert await _user(_es256(ec_key)) == "user-123"
+    assert await _user(_es256(ec_key)) == SUPABASE_USER
 
 
 async def test_expired_token_is_401(ec_key):
@@ -119,7 +120,7 @@ async def test_hs256_token_signed_with_the_public_key_is_rejected(ec_key):
 
 async def test_legacy_hs256_token_still_verifies_with_the_secret(_config):
     token = jwt.encode(_claims(), _config.supabase_jwt_secret, algorithm="HS256")
-    assert await _user(token) == "user-123"
+    assert await _user(token) == SUPABASE_USER
 
 
 async def test_alg_none_and_garbage_are_401():

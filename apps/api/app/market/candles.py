@@ -61,6 +61,70 @@ _BACKOFF_SECONDS = (1.0, 2.0, 4.0, 8.0, 16.0, 30.0, 60.0)
 _HISTORY_CANDLE_LIMIT = 210
 
 
+# Bars of aggregated history returned for 5/15-minute requests, and how far back
+# the source 1-minute rows are read to build them.
+_AGG_BAR_LIMIT = 60
+_AGG_LOOKBACK_DAYS = 5
+_TF_MINUTES = {"5min": 5, "15min": 15}
+
+
+async def _fetch_aggregated_candles(symbol: str, minutes: int) -> list[dict[str, Any]]:
+    """5/15-minute bars aggregated inside Postgres from the stored 1-minute rows.
+
+    Doing the GROUP BY in the database returns ~60 compact rows per symbol
+    instead of hundreds of raw 1-minute rows: it is both the correct
+    timeframe (raw 1-minute rows were previously handed back labelled
+    "15min") and roughly an order of magnitude less data over the wire.
+    The still-forming newest bucket is dropped so only complete bars return.
+    """
+    from datetime import datetime, timedelta, timezone
+
+    from sqlalchemy import text
+
+    now_utc = datetime.now(timezone.utc)
+    stmt = text(
+        """
+        SELECT date_bin(make_interval(mins => :m), ts, TIMESTAMPTZ '2000-01-01 00:00:00+00') AS bucket,
+               (array_agg(open ORDER BY ts))[1]      AS open,
+               max(high)                             AS high,
+               min(low)                              AS low,
+               (array_agg(close ORDER BY ts DESC))[1] AS close,
+               sum(volume)::bigint                   AS volume
+        FROM ohlcv_1min
+        WHERE symbol = :symbol AND ts >= :since
+        GROUP BY bucket
+        ORDER BY bucket DESC
+        LIMIT :n
+        """
+    )
+    async with SessionLocal() as session:
+        rows = (
+            await session.execute(
+                stmt,
+                {
+                    "m": minutes,
+                    "symbol": symbol,
+                    "since": now_utc - timedelta(days=_AGG_LOOKBACK_DAYS),
+                    "n": _AGG_BAR_LIMIT + 1,
+                },
+            )
+        ).all()
+
+    bars = [
+        {
+            "ts": r.bucket.isoformat(),
+            "open": float(r.open),
+            "high": float(r.high),
+            "low": float(r.low),
+            "close": float(r.close),
+            "volume": int(r.volume),
+        }
+        for r in rows
+        if r.bucket + timedelta(minutes=minutes) <= now_utc
+    ]
+    return list(reversed(bars[:_AGG_BAR_LIMIT]))
+
+
 async def fetch_candle_history(symbol: str, timeframe: str) -> list[dict[str, Any]]:
     """Load recent candles from Postgres, oldest-first.
 
@@ -68,9 +132,12 @@ async def fetch_candle_history(symbol: str, timeframe: str) -> list[dict[str, An
     2.2) — this was the one piece of that module still in active use, via
     `screener_engine.py`'s DSL historical-offset/rolling-function fetches.
     """
+    if timeframe in _TF_MINUTES:
+        return await _fetch_aggregated_candles(symbol, _TF_MINUTES[timeframe])
+
     from sqlalchemy import select
 
-    is_intraday = timeframe in ("1min", "5min", "15min")
+    is_intraday = timeframe == "1min"
     async with SessionLocal() as session:
         if is_intraday:
             stmt = (

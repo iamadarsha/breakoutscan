@@ -7,7 +7,7 @@ import { useTheme } from "@/components/providers/theme-provider";
 import { Sun, Moon, Database, Globe, Info, ExternalLink, LogOut } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { motion } from "framer-motion";
-import { createClient } from "@/lib/supabase/client";
+import { auth } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 
@@ -29,15 +29,14 @@ export default function SettingsPage() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUserEmail(user?.email ?? null);
-    });
+    auth
+      .getUser()
+      .then((user) => setUserEmail(user?.email ?? null))
+      .catch(() => setUserEmail(null));
   }, []);
 
   const handleSignOut = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    await auth.signOut();
     setUserEmail(null);
     router.refresh();
   };

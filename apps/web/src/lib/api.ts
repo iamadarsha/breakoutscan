@@ -76,16 +76,13 @@ async function publicFetch<T>(path: string, init?: RequestInit & { timeoutMs?: n
   });
 }
 
-/** Get auth headers from Supabase session (lazy import to avoid SSR issues) */
+/** Get auth headers from the active auth provider (lazy import to avoid SSR issues) */
 async function getAuthHeaders(): Promise<Record<string, string>> {
   try {
     if (typeof window === "undefined") return {};
-    const { createClient } = await import("./supabase/client");
-    const supabase = createClient();
-    const { data } = await supabase.auth.getSession();
-    if (data.session?.access_token) {
-      return { Authorization: `Bearer ${data.session.access_token}` };
-    }
+    const { auth } = await import("./auth");
+    const token = await auth.getAccessToken();
+    if (token) return { Authorization: `Bearer ${token}` };
   } catch {
     // No auth available — continue without token
   }

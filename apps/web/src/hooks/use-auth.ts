@@ -1,36 +1,42 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import type { User } from "@supabase/supabase-js";
-
-const supabase = createClient();
+import { auth, type AuthUser } from "@/lib/auth";
 
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
-      setLoading(false);
+    let alive = true;
+    auth
+      .getUser()
+      .then((u) => {
+        if (alive) setUser(u);
+      })
+      .catch(() => {
+        if (alive) setUser(null);
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
+      });
+
+    const unsubscribe = auth.onChange((u) => {
+      if (alive) setUser(u);
     });
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
+    return () => {
+      alive = false;
+      unsubscribe();
+    };
   }, []);
 
   return { user, loading, userId: user?.id ?? null };
 }
 
 export function useRequireAuth() {
-  const auth = useAuth();
-  // Middleware handles redirect, but this provides a typed non-null userId
-  // for components that are only rendered when authenticated
-  return auth as typeof auth & { userId: string };
+  const authState = useAuth();
+  // Feature-level gating (watchlist, alerts) renders the sign-in prompt itself;
+  // this provides a typed non-null userId for components only shown when signed in.
+  return authState as typeof authState & { userId: string };
 }

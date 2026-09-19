@@ -10,7 +10,7 @@ import { formatPrice, formatPercent } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { useTheme } from "@/components/providers/theme-provider";
 import { useAuth } from "@/hooks/use-auth";
-import { createClient } from "@/lib/supabase/client";
+import { auth } from "@/lib/auth";
 import { fetchStocks } from "@/lib/api";
 import { searchLocalStocks } from "@/lib/nse-stocks";
 import type { Stock } from "@/lib/api-types";
@@ -116,8 +116,7 @@ export function Topbar() {
   const handleSignIn = () => router.push("/login");
 
   const handleSignOut = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    await auth.signOut();
     setShowUserMenu(false);
     router.refresh();
   };

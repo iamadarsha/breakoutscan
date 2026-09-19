@@ -28,6 +28,12 @@ class Settings(BaseSettings):
         "postgresql+asyncpg://breakoutscan:breakoutscan@localhost:5432/breakoutscan"
     )
     redis_url: str = "redis://localhost:6379/0"
+    # Free Redis tiers cap connections (e.g. 30); keep this below that cap.
+    redis_max_connections: int = 50
+    # Free Postgres tiers cap connections too; also force-disable prepared
+    # statements when going through a transaction pooler (PgBouncer).
+    db_pool_size: int = 4
+    db_disable_statement_cache: bool = False
     upstox_api_key: str = ""
     upstox_api_secret: str = ""
     upstox_redirect_uri: str = "http://localhost:8001/auth/upstox/callback"
@@ -40,6 +46,12 @@ class Settings(BaseSettings):
     supabase_anon_key: str = ""
     supabase_service_key: str = ""
     supabase_jwt_secret: str = ""
+    # Any OIDC-style provider that signs ES256/RS256 ID tokens with a public JWKS
+    # (Firebase Auth, Auth0, Clerk, ...). Set all three to accept its tokens
+    # alongside (or instead of) Supabase; see docs/FREE_STACK_MIGRATION.md.
+    auth_jwks_url: str = ""
+    auth_issuer: str = ""
+    auth_audience: str = ""
     next_public_api_url: str = "http://localhost:8001"
     next_public_ws_url: str = "ws://localhost:8001"
     next_public_supabase_url: str = ""

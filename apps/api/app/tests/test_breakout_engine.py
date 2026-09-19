@@ -297,3 +297,86 @@ async def test_volume_breakout_reports_real_price_not_traded_volume(monkeypatch)
         assert float(signal.trigger_price) == 2463.0
         if signal.confirmation_price is not None:
             assert float(signal.confirmation_price) == 2463.0
+
+
+@pytest.mark.usefixtures("fake_redis")
+async def test_engine_scans_once_then_idles_while_market_is_closed(monkeypatch):
+    """A closed market cannot change, so after one final pass the loop must
+    stop re-reading history for the whole universe (that loop drove Supabase
+    egress to 247% of its free quota)."""
+    redis = await get_redis()
+    await redis.sadd("universe:nifty500", "AAA", "BBB", "CCC")
+    monkeypatch.setattr(engine, "_SCAN_CHUNK_DELAY_SECONDS", 0.0)
+    monkeypatch.setattr(engine, "BREAKOUT_SCAN_INTERVAL", 0.01)
+    monkeypatch.setattr(engine, "_CLOSED_POLL_SECONDS", 0.01)
+
+    async def _closed() -> bool:
+        return False
+
+    scans: list[str] = []
+
+    async def _fake_scan(sym: str) -> None:
+        scans.append(sym)
+
+    monkeypatch.setattr(engine, "_market_open_now", _closed)
+    monkeypatch.setattr(engine, "_scan_symbol", _fake_scan)
+
+    task = asyncio.create_task(engine.breakout_engine_loop())
+    try:
+        await asyncio.sleep(0.4)  # many idle polls would have elapsed
+    finally:
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+
+    assert sorted(scans) == ["AAA", "BBB", "CCC"]  # exactly one pass
+
+
+@pytest.mark.usefixtures("fake_redis")
+async def test_engine_keeps_scanning_every_cycle_while_market_is_open(monkeypatch):
+    redis = await get_redis()
+    await redis.sadd("universe:nifty500", "AAA")
+    monkeypatch.setattr(engine, "_SCAN_CHUNK_DELAY_SECONDS", 0.0)
+    monkeypatch.setattr(engine, "BREAKOUT_SCAN_INTERVAL", 0.01)
+
+    async def _open() -> bool:
+        return True
+
+    scans: list[str] = []
+
+    async def _fake_scan(sym: str) -> None:
+        scans.append(sym)
+
+    monkeypatch.setattr(engine, "_market_open_now", _open)
+    monkeypatch.setattr(engine, "_scan_symbol", _fake_scan)
+
+    task = asyncio.create_task(engine.breakout_engine_loop())
+    try:
+        await asyncio.sleep(0.3)
+    finally:
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+
+    assert len(scans) >= 3
+
+
+@pytest.mark.usefixtures("fake_redis")
+async def test_repeat_confirmations_are_suppressed_inside_the_cooldown():
+    from app.breakouts.types import BreakoutSignal
+
+    def _signal(trigger=TriggerType.PDH_PDL, direction=Direction.BULLISH, status=BreakoutStatus.CONFIRMED):
+        from decimal import Decimal
+
+        now = datetime(2026, 9, 15, 10, 0, tzinfo=IST)
+        return BreakoutSignal(
+            symbol="IGL", trigger_type=trigger, direction=direction, status=status,
+            reference_level=Decimal("1"), trigger_price=Decimal("1"), confirmation_price=Decimal("1"),
+            triggered_at=now, confirmed_at=now, bars_confirmed=1, score=None, volume_ratio=None, extra={},
+        )
+
+    assert await engine._should_persist(_signal()) is True
+    assert await engine._should_persist(_signal()) is False  # same breakout oscillating
+    assert await engine._should_persist(_signal(trigger=TriggerType.VWAP)) is True  # different trigger
+    assert await engine._should_persist(_signal(direction=Direction.BEARISH)) is True
+    assert await engine._should_persist(_signal(status=BreakoutStatus.FAILED)) is True  # a real failure

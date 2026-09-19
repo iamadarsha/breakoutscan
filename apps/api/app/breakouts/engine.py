@@ -42,11 +42,19 @@ from app.market.pipeline import get_candle_engine, get_market_state
 from app.services.redis_cache import get_json, get_redis, hget_all
 from app.utils.decimals import safe_decimal
 from app.utils.redis_keys import indicator_key
-from app.utils.time import IST, get_candle_boundary, market_open_today, now_ist
+from app.utils.time import IST, get_candle_boundary, is_market_open, market_open_today, now_ist
 
 log = structlog.get_logger(__name__)
 
 BREAKOUT_SCAN_INTERVAL = 30  # seconds — matches nse_poller.POLL_INTERVAL
+# While the market is closed nothing can change, so after one final pass the
+# engine idles instead of re-reading history for 500 symbols every cycle
+# (that loop alone drove Supabase egress to 247% of the free quota) and
+# re-"confirming" the same stale breakouts all weekend.
+_CLOSED_POLL_SECONDS = 120
+# A re-confirmation of the same symbol+trigger+direction inside this window is
+# the same breakout oscillating around its level, not a new event.
+_PERSIST_COOLDOWN_SECONDS = 2 * 60 * 60
 # Lowered from 20 on a 498MB-RAM VM after live testing (2026-09-15): firing
 # up to 20 concurrent symbol scans meant up to 20 concurrent DB checkouts
 # whenever several symbols signalled in the same cycle, producing real
@@ -304,6 +312,9 @@ async def _handle_signal(signal: BreakoutSignal, indicator_state: SymbolIndicato
     else:  # FAILED — a false breakout: confirmed, then reversed
         signal = replace(signal, extra={**signal.extra, "outcome": "failed_after_confirmation"})
 
+    if not await _should_persist(signal):
+        return
+
     # One session/connection checkout for this signal's whole persistence
     # path (event + alert lookup + alert history), instead of 2-3 separate
     # ones — cuts real connection-pool pressure when several symbols signal
@@ -349,6 +360,29 @@ def get_last_scan_coverage() -> dict[str, int]:
     return dict(_last_scan_coverage)
 
 
+async def _market_open_now() -> bool:
+    """Holiday-aware open/closed status; falls back to the clock window."""
+    try:
+        from app.api.routes.market import _market_status_now
+
+        return bool((await _market_status_now()).is_open)
+    except Exception:
+        return is_market_open()
+
+
+async def _should_persist(signal: BreakoutSignal) -> bool:
+    """False for a repeat of a signal already recorded inside the cooldown."""
+    key = (
+        f"breakout_persist:{signal.symbol}:{signal.trigger_type.value}:"
+        f"{signal.direction.value}:{signal.status.value}"
+    )
+    try:
+        redis = await get_redis()
+        return bool(await redis.set(key, "1", nx=True, ex=_PERSIST_COOLDOWN_SECONDS))
+    except Exception:
+        return True  # never drop a real signal because Redis hiccuped
+
+
 def _chunked(items: list[str], size: int) -> list[list[str]]:
     return [items[i : i + size] for i in range(0, len(items), size)]
 
@@ -366,8 +400,13 @@ async def breakout_engine_loop() -> None:
     tasks that all wake at once the moment a slot frees up.
     """
     global _last_scan_coverage
+    idle_pass_done = False
     while True:
         try:
+            open_now = await _market_open_now()
+            if not open_now and idle_pass_done:
+                await asyncio.sleep(_CLOSED_POLL_SECONDS)
+                continue
             symbols = await _get_universe_symbols()
             semaphore = asyncio.Semaphore(_MAX_CONCURRENT_SYMBOL_SCANS)
             processed = 0
@@ -391,6 +430,7 @@ async def breakout_engine_loop() -> None:
                 "expected": len(symbols), "processed": processed, "failed": failed,
             }
             get_breakout_state_store().purge_expired(now_ist())
+            idle_pass_done = not open_now
         except Exception:
             log.exception("breakout_engine_cycle_failed")
         await asyncio.sleep(BREAKOUT_SCAN_INTERVAL)

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { auth } from "@/lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -13,15 +13,14 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     setError(null);
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-    if (error) {
-      setError(error.message);
+    try {
+      const { redirected } = await auth.signInWithGoogle();
+      if (!redirected) {
+        router.push("/");
+        router.refresh();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Sign-in failed");
       setLoading(false);
     }
   };

@@ -33,7 +33,7 @@ async def get_redis() -> aioredis.Redis:
         connection_pool = aioredis.BlockingConnectionPool.from_url(
             settings.redis_url,
             decode_responses=True,
-            max_connections=50,
+            max_connections=settings.redis_max_connections,
             timeout=10,
             socket_connect_timeout=5,
             socket_timeout=5,

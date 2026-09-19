@@ -25,7 +25,11 @@ def _get_engine():
         # Disable prepared statement caching for PgBouncer transaction-mode poolers
         # (Supabase port 6543 uses PgBouncer in transaction mode, which doesn't
         # support named prepared statements that asyncpg sends by default).
-        if ":6543" in settings.database_url:
+        if (
+            ":6543" in settings.database_url
+            or "-pooler" in settings.database_url
+            or settings.db_disable_statement_cache
+        ):
             connect_args["statement_cache_size"] = 0
         _engine = create_async_engine(
             settings.database_url,
@@ -47,7 +51,7 @@ def _get_engine():
             # 2-3 separate checkouts per symbol — see engine.py). With
             # demand shaped down, a small fixed pool and zero overflow is
             # both sufficient and leaves real headroom under the 15 cap.
-            pool_size=4,
+            pool_size=settings.db_pool_size,
             max_overflow=0,
             connect_args=connect_args,
         )
