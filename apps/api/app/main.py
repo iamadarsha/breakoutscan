@@ -134,10 +134,11 @@ async def lifespan(_app: FastAPI):
 
     settings = get_settings()
     logger.info(
-        "Config: GEMINI_API_KEY=%s, INDIAN_API_KEY=%s, REDIS_URL=%s",
+        "Config: GEMINI_API_KEY=%s, GROQ_API_KEY=%s, INDIAN_API_KEY=%s, REDIS=%s",
         "***set***" if settings.gemini_api_key else "MISSING",
+        "***set***" if settings.groq_api_key else "MISSING",
         "***set***" if settings.indian_api_key else "MISSING",
-        settings.redis_url[:30] + "..." if settings.redis_url else "MISSING",
+        "configured" if settings.redis_url else "MISSING",
     )
 
     # Bounded DB connectivity check. Settings' own validator already

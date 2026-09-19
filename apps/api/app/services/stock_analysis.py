@@ -173,22 +173,20 @@ async def _call_groq_for_stock(prompt: str) -> dict[str, Any] | None:
         return None
 
     try:
-        from groq import AsyncGroq
+        from app.services.groq_client import groq_chat_text
 
-        client = AsyncGroq(api_key=settings.groq_api_key)
-        response = await asyncio.wait_for(
-            client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=[
-                    {"role": "system", "content": "You are an expert Indian stock market analyst. Return ONLY valid JSON, no markdown fences."},
-                    {"role": "user", "content": prompt},
-                ],
-                temperature=0.5,
-                max_tokens=1024,
-            ),
+        text = await groq_chat_text(
+            settings,
+            [
+                {"role": "system", "content": "You are an expert Indian stock market analyst. Return ONLY valid JSON, no markdown fences."},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.5,
+            max_tokens=2048,
             timeout=GROQ_TIMEOUT,
         )
-        text = response.choices[0].message.content or ""
+        if not text:
+            return None
         parsed = _parse_stock_response(text)
         if parsed:
             log.info("stock_analysis_groq_success action=%s", parsed.get("action"))

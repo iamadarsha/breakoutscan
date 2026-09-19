@@ -47,6 +47,10 @@ class Settings(BaseSettings):
     gemini_api_key: str = ""
     gemini_backup_api_key: str = ""
     groq_api_key: str = ""
+    # Groq retires models; keep the choice in config so a retirement is an env
+    # change, and fall through the list when one is gone or rate-limited.
+    groq_model: str = "openai/gpt-oss-120b"
+    groq_fallback_models: str = "qwen/qwen3.8-27b,openai/gpt-oss-20b"
     xai_api_key: str = ""
     indian_api_key: str = ""
     telegram_bot_token: str = ""

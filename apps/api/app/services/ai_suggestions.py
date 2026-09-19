@@ -383,7 +383,7 @@ async def _call_gemini(headlines: list[dict[str, str]], market_summary: str) -> 
 # LAYER 2: Groq / xAI (alternative AI providers)
 # ---------------------------------------------------------------------------
 async def _call_alternative_ai(headlines: list[dict[str, str]], market_summary: str) -> dict[str, list[dict[str, Any]]]:
-    """Try Groq (Llama 3.3 70B) then xAI (Grok) as fallback AI providers."""
+    """Try Groq (model chain from settings) then xAI (Grok) as fallback AI providers."""
     from app.core.config import get_settings
     import httpx
 
@@ -394,29 +394,20 @@ async def _call_alternative_ai(headlines: list[dict[str, str]], market_summary: 
         {"role": "user", "content": prompt},
     ]
 
-    # Try Groq first (free tier: 500K tokens/day)
+    # Try Groq first (free tier, model chain configured in settings)
     if settings.groq_api_key:
         try:
-            from groq import AsyncGroq
-            client = AsyncGroq(api_key=settings.groq_api_key)
-            response = await asyncio.wait_for(
-                client.chat.completions.create(
-                    model="llama-3.3-70b-versatile",
-                    messages=messages,
-                    temperature=0.7,
-                    max_tokens=4096,
-                ),
-                timeout=GROQ_TIMEOUT,
+            from app.services.groq_client import groq_chat_text
+
+            text = await groq_chat_text(
+                settings, messages, temperature=0.7, max_tokens=4096, timeout=GROQ_TIMEOUT,
             )
-            text = response.choices[0].message.content or ""
-            parsed = _parse_ai_response(text)
+            parsed = _parse_ai_response(text or "")
             if parsed and _has_picks(parsed):
                 total = sum(len(v) for v in parsed.values())
                 log.info("layer2_groq_success picks=%d", total)
                 return parsed
             log.warning("layer2_groq_empty_response")
-        except asyncio.TimeoutError:
-            log.warning("layer2_groq_timeout")
         except Exception as e:
             log.warning("layer2_groq_failed error=%s type=%s", e, type(e).__name__)
 
