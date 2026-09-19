@@ -27,3 +27,6 @@ CREDENTIAL_ROTATION_WORKSHEET.md
 .venv-phase3/
 .claude-flow/
 *.tsbuildinfo
+
+# Vercel CLI link metadata
+.vercel
