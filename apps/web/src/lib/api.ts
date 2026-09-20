@@ -188,9 +188,6 @@ export function runPrebuiltScan(scanId: string): Promise<ScanResult> {
   return publicFetch<ScanResult>("/api/screener/run", {
     method: "POST",
     body: JSON.stringify({ scan_id: scanId }),
-  }).then((r) => {
-    track("scan_run", { scan_id: scanId, kind: "prebuilt", matches: r?.total_matches ?? 0 });
-    return r;
   });
 }
 
@@ -198,9 +195,6 @@ export function runCustomScan(req: CustomScanRequest): Promise<ScanResult> {
   return publicFetch<ScanResult>("/api/screener/custom", {
     method: "POST",
     body: JSON.stringify(req),
-  }).then((r) => {
-    track("scan_run", { scan_id: "custom", kind: "custom", matches: r?.total_matches ?? 0 });
-    return r;
   });
 }
 

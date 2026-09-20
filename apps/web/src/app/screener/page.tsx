@@ -1,4 +1,5 @@
 "use client";
+import { track } from "@/lib/analytics";
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -33,7 +34,11 @@ export default function ScreenerPage() {
     setActiveScanId(scanId);
     setResult(null);
     runPrebuilt.mutate(scanId, {
-      onSuccess: (data) => setResult(data),
+      onSuccess: (data) => {
+        // Counted here, not in the API layer: the dashboard also runs scans on its own in the background.
+        track("scan_run", { scan_id: scanId, kind: "prebuilt", matches: data?.total_matches ?? 0 });
+        setResult(data);
+      },
     });
   };
 
@@ -46,7 +51,10 @@ export default function ScreenerPage() {
     runCustom.mutate(
       { conditions, universe, timeframe },
       {
-        onSuccess: (data) => setResult(data),
+        onSuccess: (data) => {
+          track("scan_run", { scan_id: "custom", kind: "custom", matches: data?.total_matches ?? 0 });
+          setResult(data);
+        },
       }
     );
   };
