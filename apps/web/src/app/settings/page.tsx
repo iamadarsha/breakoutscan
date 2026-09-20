@@ -11,6 +11,7 @@ import { Sun, Moon, LogOut, LogIn } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { isOptedOut, setOptOut } from "@/lib/analytics";
 
 // What each provider does, so a data problem can be traced to its source.
 const PROVIDERS = [
@@ -32,6 +33,9 @@ export default function SettingsPage() {
   const router = useRouter();
   const { data: health, isError, isPending } = useApiHealth();
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [optedOut, setOptedOutState] = useState(false);
+
+  useEffect(() => setOptedOutState(isOptedOut()), []);
 
   useEffect(() => {
     auth
@@ -69,6 +73,29 @@ export default function SettingsPage() {
               >
                 {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                 Switch to {theme === "dark" ? "light" : "dark"}
+              </button>
+            </div>
+          </section>
+
+          <section className="glass-card overflow-hidden">
+            <PanelHeader title="Privacy" />
+            <div className="flex items-center justify-between gap-4 px-4 py-3">
+              <div>
+                <p className="text-data font-medium text-text-primary">Usage analytics</p>
+                <p className="text-label text-text-muted">
+                  {optedOut ? "Off. " : "On. "}Counts page views and button clicks under an anonymous id. Never records what you type,
+                  your IP address or your email. Honours Do Not Track.
+                </p>
+              </div>
+              <button
+                data-track="privacy-toggle"
+                onClick={() => {
+                  setOptOut(!optedOut);
+                  setOptedOutState(!optedOut);
+                }}
+                className="flex h-9 shrink-0 items-center rounded-lg border border-border bg-card px-3 text-data font-medium text-text-primary transition-colors hover:border-accent/40 hover:bg-accent/5"
+              >
+                {optedOut ? "Turn on" : "Turn off"}
               </button>
             </div>
           </section>

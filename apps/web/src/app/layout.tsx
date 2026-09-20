@@ -4,6 +4,7 @@ import { IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { getQueryClient } from "@/lib/query-client";
 import { ThemeProvider, ThemedToaster } from "@/components/providers/theme-provider";
+import { AnalyticsProvider } from "@/components/providers/analytics-provider";
 import type { ReactNode } from "react";
 
 import "./globals.css";
@@ -54,6 +55,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
           <ThemeProvider>
             {children}
             <ThemedToaster />
+            <AnalyticsProvider />
           </ThemeProvider>
         </QueryClientProvider>
       </body>

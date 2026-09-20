@@ -85,6 +85,18 @@ class Settings(BaseSettings):
     rate_limit_screener: str = "20/minute"
     rate_limit_ai_refresh: str = "5/minute"
 
+    # First-party usage analytics (see app/services/analytics.py, docs/ANALYTICS.md)
+    analytics_enabled: bool = True
+    # Secret for the read-only CSV/JSON exports (e.g. Google Sheets IMPORTDATA). Empty = token access disabled.
+    analytics_export_token: str = ""
+    # Comma-separated verified emails allowed to open the admin metrics with their normal sign-in.
+    admin_emails: str = ""
+    # Raw events are pruned after this many days; daily rollups are kept forever.
+    analytics_raw_keep_days: int = 45
+    # Safety valve for the free-tier database: stop storing new events past this many per IST day.
+    analytics_max_events_per_day: int = 15000
+    analytics_visitor_rate_per_min: int = 240
+
     @model_validator(mode="after")
     def _reject_unsafe_production_defaults(self) -> "Settings":
         """Fail fast at startup rather than silently degrading in production.

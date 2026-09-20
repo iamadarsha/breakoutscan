@@ -1,4 +1,5 @@
 "use client";
+import { markSignInStarted } from "@/components/providers/analytics-provider";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -14,6 +15,7 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
     try {
+      markSignInStarted();
       const { redirected } = await auth.signInWithGoogle();
       if (!redirected) {
         router.push("/");

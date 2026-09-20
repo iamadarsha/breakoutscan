@@ -14,6 +14,7 @@ from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import text
 
+from app.core.config import get_settings
 from app.db.session import SessionLocal
 
 logger = logging.getLogger(__name__)
@@ -51,8 +52,17 @@ async def prune_once(now: datetime | None = None) -> dict[str, int]:
     events = await _delete_in_batches(
         "breakout_events", "triggered_at", now - timedelta(days=BREAKOUT_EVENTS_KEEP_DAYS)
     )
-    logger.info("data_retention pruned ohlcv_1min=%d breakout_events=%d", candles, events)
-    return {"ohlcv_1min": candles, "breakout_events": events}
+    # Raw analytics events: roll the boundary days up first so the permanent daily totals are complete,
+    # then delete. (Rollups are also refreshed every 30 minutes; this is a safety net.)
+    from app.services.analytics import IST, rollup_days
+
+    analytics_cutoff = now - timedelta(days=get_settings().analytics_raw_keep_days)
+    await rollup_days(days_back=2, today=analytics_cutoff.astimezone(IST).date())
+    analytics = await _delete_in_batches("analytics_events", "ts", analytics_cutoff)
+    logger.info(
+        "data_retention pruned ohlcv_1min=%d breakout_events=%d analytics_events=%d", candles, events, analytics
+    )
+    return {"ohlcv_1min": candles, "breakout_events": events, "analytics_events": analytics}
 
 
 async def data_retention_loop() -> None:

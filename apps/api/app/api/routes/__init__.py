@@ -7,6 +7,7 @@ from fastapi import APIRouter
 from app.api.routes import (
     ai_suggestions,
     alerts,
+    analytics,
     auth,
     breakouts,
     company_info,
@@ -38,3 +39,4 @@ api_router.include_router(ai_suggestions.router)
 api_router.include_router(company_info.router)
 api_router.include_router(stock_analysis.router)
 api_router.include_router(breakouts.router)
+api_router.include_router(analytics.router)

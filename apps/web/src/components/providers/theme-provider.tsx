@@ -1,4 +1,5 @@
 "use client";
+import { track } from "@/lib/analytics";
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { Toaster } from "sonner";
@@ -31,8 +32,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (meta) meta.content = theme === "dark" ? "#0a0d13" : "#f2f4f7";
   }, [theme]);
 
-  const toggleTheme = () =>
-    setTheme((t) => (t === "dark" ? "light" : "dark"));
+  const toggleTheme = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    track("theme_toggle", { to: next });
+    setTheme(next);
+  };
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>

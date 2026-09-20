@@ -185,6 +185,13 @@ async def lifespan(_app: FastAPI):
     )
     logger.info("Event-loop lag monitor started")
 
+    # Usage analytics writer + daily rollup. Independent of Redis so tracking survives a cache outage.
+    from app.services.analytics import analytics_flush_loop, analytics_rollup_loop
+
+    analytics_flush_task = asyncio.create_task(analytics_flush_loop(), name="analytics_flush")
+    analytics_rollup_task = asyncio.create_task(analytics_rollup_loop(), name="analytics_rollup")
+    logger.info("Analytics writer started")
+
     watchdog_task = None
     breakout_watchdog_task = None
     fundamentals_task = None
@@ -290,6 +297,14 @@ async def lifespan(_app: FastAPI):
         except asyncio.CancelledError:
             pass
         logger.info("Breakout engine watchdog stopped")
+
+    for analytics_task in (analytics_flush_task, analytics_rollup_task):
+        analytics_task.cancel()
+        try:
+            await analytics_task  # the flush loop writes any buffered events before exiting
+        except asyncio.CancelledError:
+            pass
+    logger.info("Analytics writer stopped")
 
     if retention_task is not None:
         retention_task.cancel()

@@ -1,3 +1,4 @@
+import { track } from "./analytics";
 import { API_BASE_URL } from "./constants";
 import type {
   ActiveBreakout,
@@ -187,6 +188,9 @@ export function runPrebuiltScan(scanId: string): Promise<ScanResult> {
   return publicFetch<ScanResult>("/api/screener/run", {
     method: "POST",
     body: JSON.stringify({ scan_id: scanId }),
+  }).then((r) => {
+    track("scan_run", { scan_id: scanId, kind: "prebuilt", matches: r?.total_matches ?? 0 });
+    return r;
   });
 }
 
@@ -194,6 +198,9 @@ export function runCustomScan(req: CustomScanRequest): Promise<ScanResult> {
   return publicFetch<ScanResult>("/api/screener/custom", {
     method: "POST",
     body: JSON.stringify(req),
+  }).then((r) => {
+    track("scan_run", { scan_id: "custom", kind: "custom", matches: r?.total_matches ?? 0 });
+    return r;
   });
 }
 
@@ -312,12 +319,18 @@ export function addToWatchlist(symbol: string): Promise<WatchlistItem> {
   return apiFetch<WatchlistItem>("/api/watchlist", {
     method: "POST",
     body: JSON.stringify({ symbol }),
+  }).then((r) => {
+    track("watchlist_add", { symbol });
+    return r;
   });
 }
 
 export function removeFromWatchlist(symbol: string): Promise<void> {
   return apiFetch<void>(`/api/watchlist/${symbol}`, {
     method: "DELETE",
+  }).then((r) => {
+    track("watchlist_remove", { symbol });
+    return r;
   });
 }
 
@@ -334,11 +347,17 @@ export function createAlert(req: AlertCreateRequest): Promise<Alert> {
   return apiFetch<Alert>("/api/alerts", {
     method: "POST",
     body: JSON.stringify(req),
+  }).then((r) => {
+    track("alert_create");
+    return r;
   });
 }
 
 export function deleteAlert(id: string): Promise<void> {
-  return apiFetch<void>(`/api/alerts/${id}`, { method: "DELETE" });
+  return apiFetch<void>(`/api/alerts/${id}`, { method: "DELETE" }).then((r) => {
+    track("alert_delete");
+    return r;
+  });
 }
 
 export async function fetchAlertHistory(limit = 50): Promise<AlertHistoryItem[]> {
@@ -398,6 +417,9 @@ export function fetchAiSuggestions(): Promise<AiSuggestionsResponse> {
 export function refreshAiSuggestions(): Promise<AiSuggestionsResponse> {
   return publicFetch<AiSuggestionsResponse>("/api/ai-suggestions/refresh", {
     method: "POST",
+  }).then((r) => {
+    track("ai_picks_refresh");
+    return r;
   });
 }
 
