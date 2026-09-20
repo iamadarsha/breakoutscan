@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime
 import logging
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
@@ -44,6 +45,23 @@ async def _background_generate():
         _generating = False
 
 
+_refresh_lock = asyncio.Lock()
+REFRESH_REUSE_SECONDS = 300
+
+
+def _age_seconds(generated_at: str | None) -> float:
+    """Seconds since an ISO timestamp; infinity when missing or unparseable so we regenerate."""
+    if not generated_at:
+        return float("inf")
+    try:
+        ts = datetime.fromisoformat(generated_at)
+    except ValueError:
+        return float("inf")
+    if ts.tzinfo is None:
+        ts = ts.replace(tzinfo=now_ist().tzinfo)
+    return (now_ist() - ts).total_seconds()
+
+
 @router.get("")
 @limiter.limit(get_settings().rate_limit_default)
 async def get_ai_suggestions(request: Request, background_tasks: BackgroundTasks):
@@ -74,10 +92,15 @@ async def get_ai_suggestions(request: Request, background_tasks: BackgroundTasks
 async def refresh_ai_suggestions(request: Request):
     """Force regenerate AI stock suggestions (typically 3-10s via Gemini, up to ~120s worst case if every layer falls through)."""
     try:
-        from app.services.ai_suggestions import generate_suggestions
+        from app.services.ai_suggestions import generate_suggestions, get_suggestions
 
-        result = await asyncio.wait_for(generate_suggestions(), timeout=AI_SUGGESTIONS_OUTER_TIMEOUT)
-        return result
+        # One generation at a time; anyone who queued behind it gets its fresh result instead of
+        # starting another ~30s Gemini call (protects the quota when many people press Refresh).
+        async with _refresh_lock:
+            cached = await get_suggestions()
+            if cached and _age_seconds(cached.get("generated_at")) < REFRESH_REUSE_SECONDS:
+                return cached
+            return await asyncio.wait_for(generate_suggestions(), timeout=AI_SUGGESTIONS_OUTER_TIMEOUT)
     except asyncio.TimeoutError:
         logger.error("refresh_ai_suggestions: %ds timeout exceeded", AI_SUGGESTIONS_OUTER_TIMEOUT)
         raise HTTPException(status_code=504, detail="Generation timed out. Picks will be generated in background on next visit.")

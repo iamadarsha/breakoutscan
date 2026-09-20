@@ -11,6 +11,9 @@
  */
 import { type NextRequest, NextResponse } from "next/server";
 
+// AI Picks refresh takes ~30s; the platform default would cut the proxied request short.
+export const maxDuration = 60;
+
 const BACKEND = process.env.INTERNAL_API_URL ?? "http://localhost:8001";
 
 async function proxy(req: NextRequest, path: string[]): Promise<NextResponse> {

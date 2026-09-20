@@ -411,6 +411,7 @@ export function fetchAiSuggestions(): Promise<AiSuggestionsResponse> {
 export function refreshAiSuggestions(): Promise<AiSuggestionsResponse> {
   return publicFetch<AiSuggestionsResponse>("/api/ai-suggestions/refresh", {
     method: "POST",
+    timeoutMs: 75_000, // generation takes ~30s server-side
   }).then((r) => {
     track("ai_picks_refresh");
     return r;
